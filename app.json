@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "COOL",
+    "slug": "cool-create-our-own-library",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "cool",
+    "userInterfaceStyle": "automatic",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "icon": "./assets/icon.png",
+      "supportsTablet": true,
+      "buildNumber": "1",
+      "bundleIdentifier": "it.local.cool"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-background.png",
+        "backgroundColor": "#A7E3D0"
+      },
+      "versionCode": 1,
+      "package": "it.local.cool",
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f7f8fa"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Consenti a COOL di usare la fotocamera per scansionare i codici ISBN dei libri.",
+          "recordAudioAndroid": false,
+          "barcodeScannerEnabled": true
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "31a138ac-d50e-4f9e-a7d1-c7d9ce08f376"
+      }
+    }
+  }
+}

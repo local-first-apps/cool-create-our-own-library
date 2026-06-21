@@ -1,0 +1,268 @@
+import { useFocusEffect } from "@react-navigation/native";
+import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useCallback, useState } from "react";
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+
+import { AppButton } from "../components/AppButton";
+import { renameLibrary } from "../services/db";
+import {
+  DEFAULT_LANGUAGE,
+  SUPPORTED_LANGUAGES,
+  getActiveLibrary,
+  getSettings,
+  saveActiveLibrary,
+  saveDeviceName,
+  saveLanguage
+} from "../services/settings";
+import { RootStackParamList } from "../types/Navigation";
+
+type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
+type LegalModal = "terms" | "privacy" | null;
+
+export function SettingsScreen({ navigation }: Props) {
+  const [deviceName, setDeviceName] = useState("");
+  const [libraryName, setLibraryName] = useState("");
+  const [currentLibraryName, setCurrentLibraryName] = useState("");
+  const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+  const [legalModal, setLegalModal] = useState<LegalModal>(null);
+  const [saving, setSaving] = useState(false);
+
+  useFocusEffect(
+    useCallback(() => {
+      Promise.all([getSettings(), getActiveLibrary()])
+        .then(([settings, activeLibrary]) => {
+          setDeviceName(settings.deviceName);
+          setLanguage(settings.language);
+          setLibraryName(activeLibrary);
+          setCurrentLibraryName(activeLibrary);
+        })
+        .catch(() => {
+          setDeviceName("Dispositivo non specificato");
+          setLanguage(DEFAULT_LANGUAGE);
+          setLibraryName("Biblioteca principale");
+          setCurrentLibraryName("Biblioteca principale");
+        });
+    }, [])
+  );
+
+  async function handleSave() {
+    try {
+      setSaving(true);
+      const renamedLibrary = await renameLibrary(currentLibraryName, libraryName);
+      await saveActiveLibrary(renamedLibrary);
+      await saveDeviceName(deviceName);
+      await saveLanguage(language);
+      Alert.alert("Impostazioni salvate", "Biblioteca, dispositivo e lingua sono stati aggiornati.", [
+        { text: "OK", onPress: () => navigation.goBack() }
+      ]);
+    } catch (err) {
+      Alert.alert("Errore", err instanceof Error ? err.message : "Impossibile salvare le impostazioni.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.field}>
+        <Text style={styles.label}>Nome biblioteca</Text>
+        <Text style={styles.description}>Nome locale della biblioteca usata su questo telefono.</Text>
+        <TextInput
+          autoCapitalize="sentences"
+          onChangeText={setLibraryName}
+          placeholder="Es. Biblioteca di casa"
+          placeholderTextColor="#8a94a6"
+          style={styles.input}
+          value={libraryName}
+        />
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>Nome dispositivo</Text>
+        <Text style={styles.description}>Questo nome viene salvato solo sul telefono.</Text>
+        <TextInput
+          autoCapitalize="sentences"
+          onChangeText={setDeviceName}
+          placeholder="Es. iPhone Roberto"
+          placeholderTextColor="#8a94a6"
+          style={styles.input}
+          value={deviceName}
+        />
+      </View>
+
+      <View style={styles.field}>
+        <Text style={styles.label}>Lingua</Text>
+        <View style={styles.languageRow}>
+          {SUPPORTED_LANGUAGES.map((item) => (
+            <Pressable
+              key={item}
+              accessibilityRole="button"
+              onPress={() => setLanguage(item)}
+              style={[styles.languageButton, item === language && styles.languageButtonActive]}
+            >
+              <Text style={[styles.languageText, item === language && styles.languageTextActive]}>{item}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      <View style={styles.legalActions}>
+        <View style={styles.actionButton}>
+          <AppButton label="Termini di servizio" onPress={() => setLegalModal("terms")} variant="secondary" />
+        </View>
+        <View style={styles.actionButton}>
+          <AppButton label="Privacy" onPress={() => setLegalModal("privacy")} variant="secondary" />
+        </View>
+      </View>
+
+      <View style={styles.actions}>
+        <View style={styles.actionButton}>
+          <AppButton label="Salva" onPress={handleSave} disabled={saving} />
+        </View>
+        <View style={styles.actionButton}>
+          <AppButton label="Annulla" onPress={() => navigation.goBack()} variant="secondary" disabled={saving} />
+        </View>
+      </View>
+
+      <Modal animationType="slide" onRequestClose={() => setLegalModal(null)} transparent visible={Boolean(legalModal)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalPanel}>
+            <Text style={styles.modalTitle}>{legalModal === "privacy" ? "Privacy" : "Termini di servizio"}</Text>
+            <ScrollView style={styles.legalTextBox}>
+              {(legalModal === "privacy" ? PRIVACY_TEXT : TERMS_TEXT).map((paragraph) => (
+                <Text key={paragraph} style={styles.legalText}>
+                  {paragraph}
+                </Text>
+              ))}
+            </ScrollView>
+            <View style={styles.modalActions}>
+              <AppButton label="Chiudi" onPress={() => setLegalModal(null)} />
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const TERMS_TEXT = [
+  "COOL | Create Our Own Library e' un'app per catalogare libri su un dispositivo personale.",
+  "L'utente e' responsabile dei dati inseriti, delle modifiche, delle cancellazioni e dei file esportati.",
+  "Le informazioni recuperate da Google Books possono essere incomplete, inesatte o non disponibili. L'utente puo' correggere manualmente i dati prima o dopo il salvataggio.",
+  "L'app non offre sincronizzazione cloud, account utente, backup remoto o recupero automatico dei dati. E' consigliabile esportare periodicamente la biblioteca.",
+  "I file CSV, Excel, Word e PDF sono generati sul telefono e possono essere condivisi tramite le funzioni del sistema operativo.",
+  "Il servizio e' fornito senza garanzia di disponibilita' continua o assenza di errori. Per una distribuzione commerciale, questi termini andranno verificati e adattati al paese di pubblicazione."
+];
+
+const PRIVACY_TEXT = [
+  "COOL | Create Our Own Library salva la biblioteca nel database SQLite locale del telefono.",
+  "L'app non usa backend, database remoto, Render, Firebase, Supabase o sincronizzazione cloud.",
+  "Il nome dispositivo, il nome biblioteca e i libri salvati restano sul telefono, salvo esportazione o condivisione avviata dall'utente.",
+  "Quando si scansiona o inserisce un ISBN, l'app puo' interrogare Google Books API per recuperare titolo, autori, editore, anno, categoria, lingua, sinossi e copertina. In quel caso la richiesta viene inviata a Google.",
+  "L'app richiede il permesso fotocamera per leggere i codici a barre. I file esportati vengono condivisi solo tramite le funzioni di condivisione scelte dall'utente.",
+  "Per una pubblicazione su App Store o Google Play, questa informativa dovra' essere completata con dati del titolare, contatti, paese applicabile e collegamenti pubblici richiesti dagli store."
+];
+
+const styles = StyleSheet.create({
+  actions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 8
+  },
+  actionButton: {
+    flex: 1
+  },
+  container: {
+    backgroundColor: "#f7f8fa",
+    flex: 1,
+    padding: 16
+  },
+  description: {
+    color: "#475569",
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 10
+  },
+  field: {
+    marginBottom: 18
+  },
+  input: {
+    backgroundColor: "#ffffff",
+    borderColor: "#cbd5e1",
+    borderRadius: 8,
+    borderWidth: 1,
+    color: "#111827",
+    fontSize: 16,
+    minHeight: 48,
+    paddingHorizontal: 12
+  },
+  label: {
+    color: "#111827",
+    fontSize: 17,
+    fontWeight: "800",
+    marginBottom: 4
+  },
+  languageButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#cbd5e1",
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    minHeight: 42,
+    justifyContent: "center"
+  },
+  languageButtonActive: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB"
+  },
+  languageRow: {
+    flexDirection: "row",
+    gap: 8
+  },
+  languageText: {
+    color: "#334155",
+    fontSize: 14,
+    fontWeight: "800"
+  },
+  languageTextActive: {
+    color: "#ffffff"
+  },
+  legalActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+    marginTop: 2
+  },
+  legalText: {
+    color: "#334155",
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 12
+  },
+  legalTextBox: {
+    maxHeight: 380
+  },
+  modalActions: {
+    marginTop: 12
+  },
+  modalBackdrop: {
+    backgroundColor: "rgba(15, 23, 42, 0.38)",
+    flex: 1,
+    justifyContent: "flex-end"
+  },
+  modalPanel: {
+    backgroundColor: "#f7f8fa",
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    maxHeight: "88%",
+    padding: 16,
+    paddingBottom: 28
+  },
+  modalTitle: {
+    color: "#111827",
+    fontSize: 22,
+    fontWeight: "900",
+    marginBottom: 10
+  }
+});

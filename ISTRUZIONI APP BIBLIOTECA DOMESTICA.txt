@@ -1,0 +1,329 @@
+Voglio creare una piccola app mobile per iOS e Android per catalogare i libri di casa leggendo il codice a barre ISBN/EAN-13 e generando un file Excel.
+
+OBIETTIVO GENERALE
+
+Realizza una app semplice, essenziale, senza login, senza cloud, senza backend e senza database remoto.
+
+L’app deve funzionare localmente sul telefono e permettere di:
+
+1. scansionare il codice a barre di un libro;
+2. ricavare l’ISBN;
+3. cercare i metadati del libro tramite Google Books API;
+4. salvare il libro in un archivio locale sul dispositivo;
+5. visualizzare l’elenco dei libri salvati;
+6. modificare o cancellare un libro;
+7. esportare l’intera biblioteca in un file Excel .xlsx condivisibile;
+8. consentire l’uso indipendente dell’app su più telefoni, senza sincronizzazione.
+
+Non usare Render.
+Non creare backend.
+Non creare database remoto.
+Non creare sincronizzazione cloud.
+Non creare account utente.
+Non usare Firebase, Supabase o altri servizi cloud.
+
+L’unica chiamata esterna ammessa è Google Books API per recuperare i metadati del libro partendo dall’ISBN.
+
+STACK TECNICO
+
+Usa:
+
+* Expo + React Native + TypeScript;
+* expo-camera per la scansione barcode, usando le API attuali di Expo, preferibilmente CameraView;
+* expo-sqlite per il database locale;
+* SheetJS/xlsx per generare il file Excel;
+* expo-file-system ed expo-sharing per creare e condividere il file .xlsx;
+* fetch nativo per interrogare Google Books API;
+* React Navigation per navigare tra le schermate.
+
+Non usare librerie non mantenute o deprecate se esistono alternative attuali in Expo.
+
+FUNZIONALITÀ PRINCIPALI
+
+1. SCHERMATA HOME
+
+La schermata iniziale deve essere molto semplice.
+
+Deve contenere:
+
+* titolo: “Biblioteca di casa”;
+* pulsante principale: “Scansiona libro”;
+* pulsante: “Aggiungi manualmente”;
+* pulsante: “Esporta Excel”;
+* pulsante o sezione semplice per impostare il nome del dispositivo;
+* elenco dei libri salvati, ordinato alfabeticamente per titolo.
+
+Per ogni libro nell’elenco mostra:
+
+* titolo;
+* autore/i;
+* anno;
+* scaffale/stanza, se presente.
+
+Toccando un libro si apre la schermata di dettaglio.
+
+2. NOME DISPOSITIVO
+
+L’app deve permettere all’utente di indicare un nome del dispositivo, ad esempio:
+
+* Telefono Roberto;
+* Telefono casa;
+* Telefono Rebecca;
+* iPhone Roberto;
+* Android casa.
+
+Il nome dispositivo serve solo per l’esportazione Excel, così da capire da quale telefono proviene ciascun record.
+
+Il nome dispositivo deve essere salvato localmente sul telefono.
+
+Se l’utente non imposta nessun nome, usare come valore predefinito:
+
+“Dispositivo non specificato”.
+
+3. SCHERMATA SCANSIONE
+
+Apri la fotocamera e rileva codici a barre EAN-13.
+
+Quando viene letto un codice:
+
+* blocca temporaneamente ulteriori scansioni per evitare letture multiple;
+* verifica se il codice inizia con 978 o 979;
+* se non sembra un ISBN valido, mostra un messaggio: “Codice non riconosciuto come ISBN”;
+* se è valido, usa il codice come ISBN-13;
+* cerca il libro tramite Google Books API con query:
+
+https://www.googleapis.com/books/v1/volumes?q=isbn:ISBN
+
+Gestisci anche il caso in cui non venga trovato nessun risultato.
+
+4. RISULTATO DELLA SCANSIONE
+
+Se il libro viene trovato, mostra una schermata di conferma con:
+
+* titolo;
+* autore/i;
+* editore;
+* anno;
+* ISBN;
+* immagine copertina se disponibile;
+* categoria, se disponibile;
+* campo modificabile “Scaffale/Stanza”;
+* campo modificabile “Note”.
+
+Pulsanti:
+
+* “Salva libro”;
+* “Annulla”.
+
+5. AGGIUNTA MANUALE
+
+Crea una schermata per inserire manualmente:
+
+* ISBN;
+* Titolo;
+* Autore/i;
+* Editore;
+* Anno;
+* Categoria;
+* Scaffale/Stanza;
+* Note.
+
+I campi obbligatori devono essere solo:
+
+* Titolo.
+
+6. DATABASE LOCALE
+
+Crea una tabella SQLite chiamata books con questi campi:
+
+id INTEGER PRIMARY KEY AUTOINCREMENT
+isbn TEXT
+title TEXT NOT NULL
+authors TEXT
+publisher TEXT
+publishedYear TEXT
+category TEXT
+shelf TEXT
+notes TEXT
+thumbnail TEXT
+createdAt TEXT
+updatedAt TEXT
+
+Crea inoltre una piccola struttura locale per salvare le impostazioni dell’app, incluso il nome del dispositivo.
+
+Può essere una tabella SQLite settings oppure un’altra soluzione locale semplice e compatibile con Expo.
+
+7. GESTIONE DUPLICATI
+
+Se l’ISBN è già presente nel database locale, non salvare automaticamente un duplicato.
+
+Mostra invece un messaggio:
+
+“Questo libro è già presente nella biblioteca.”
+
+Dai la possibilità di tornare all’elenco.
+
+Nel caso di libri inseriti manualmente senza ISBN, non bloccare il salvataggio.
+
+8. DETTAGLIO LIBRO
+
+Mostra tutti i dati del libro.
+
+Permetti:
+
+* modifica;
+* eliminazione con conferma.
+
+9. ESPORTAZIONE EXCEL
+
+Il pulsante “Esporta Excel” deve generare un file .xlsx con un foglio chiamato “Biblioteca”.
+
+Le colonne devono essere:
+
+ID locale
+ISBN
+Titolo
+Autori
+Editore
+Anno
+Categoria
+Scaffale/Stanza
+Note
+Data inserimento
+Ultima modifica
+Dispositivo
+
+Il nome del file deve essere:
+
+biblioteca_domestica_YYYY-MM-DD.xlsx
+
+Dopo la generazione del file, apri il menu di condivisione del telefono tramite expo-sharing.
+
+L’ISBN deve essere sempre scritto nel file Excel come testo, non come numero, per evitare che Excel modifichi il formato.
+
+L’ID locale deve essere esportato solo come informazione utile, ma non deve essere considerato una chiave globale, perché ogni telefono ha il proprio database locale.
+
+10. USO SU PIÙ TELEFONI
+
+L’app deve poter essere installata e usata su più telefoni diversi in modo indipendente.
+
+Ogni telefono deve:
+
+* salvare i propri libri nel proprio database SQLite locale;
+* esportare il proprio file Excel;
+* indicare nel file Excel il nome del dispositivo.
+
+Non deve esistere alcuna sincronizzazione automatica tra telefoni.
+
+L’unione dei file Excel verrà fatta manualmente dall’utente fuori dall’app.
+
+Nel README spiega chiaramente che, usando l’app su due telefoni diversi, l’utente può:
+
+1. scansionare una parte dei libri sul telefono 1;
+2. scansionare un’altra parte dei libri sul telefono 2;
+3. esportare i due file Excel;
+4. unirli manualmente su PC/Mac;
+5. rimuovere eventuali duplicati usando ISBN come chiave principale.
+
+Nel README spiega anche che, se manca l’ISBN, l’utente può usare come chiave secondaria:
+
+Titolo + Autori + Anno.
+
+11. INTERFACCIA
+
+L’interfaccia deve essere pulita, leggibile e minimale.
+
+Usa componenti React Native standard.
+
+Niente grafica complessa.
+Niente animazioni inutili.
+Niente funzionalità avanzate.
+Niente login.
+Niente cloud.
+Niente impostazioni complesse.
+
+Privilegia semplicità, stabilità e affidabilità.
+
+12. GESTIONE ERRORI
+
+Gestisci questi casi:
+
+* permesso fotocamera negato;
+* assenza di connessione internet durante il recupero dei dati;
+* libro non trovato su Google Books;
+* errore database;
+* errore esportazione Excel;
+* nessun libro presente quando si tenta l’esportazione;
+* nome dispositivo non impostato;
+* ISBN già presente nel database locale.
+
+13. STRUTTURA DEL PROGETTO
+
+Organizza il codice in modo semplice:
+
+/src
+/components
+/screens
+HomeScreen.tsx
+ScannerScreen.tsx
+BookConfirmScreen.tsx
+ManualBookScreen.tsx
+BookDetailScreen.tsx
+SettingsScreen.tsx
+/services
+db.ts
+googleBooks.ts
+excelExport.ts
+settings.ts
+/types
+Book.ts
+Settings.ts
+/utils
+date.ts
+isbn.ts
+App.tsx
+
+14. CONSEGNA
+
+Genera il progetto completo.
+
+Includi:
+
+* codice funzionante;
+* istruzioni per installare le dipendenze;
+* istruzioni per avviare l’app;
+* eventuali note sui permessi fotocamera in app.json/app.config;
+* una breve sezione README con uso dell’app;
+* spiegazione dell’uso su più telefoni senza database condiviso;
+* spiegazione dell’esportazione e dell’unione manuale dei file Excel.
+
+15. COMANDI ATTESI
+
+Fornisci i comandi necessari, ad esempio:
+
+npx create-expo-app biblioteca-domestica --template
+npm install ...
+npx expo start
+
+16. CRITERI DI ACCETTAZIONE
+
+L’app è accettabile se:
+
+* si avvia senza errori;
+* chiede il permesso della fotocamera;
+* legge un codice EAN-13/ISBN;
+* riconosce come ISBN validi i codici che iniziano con 978 o 979;
+* recupera titolo e autore da Google Books quando disponibili;
+* salva il libro nel database SQLite locale;
+* mostra i libri salvati nella home;
+* consente modifica ed eliminazione;
+* impedisce duplicati locali basati su ISBN;
+* permette di impostare un nome dispositivo;
+* esporta correttamente un file Excel .xlsx;
+* esporta l’ISBN come testo;
+* include nel file Excel la colonna “Dispositivo”;
+* funziona su iOS e Android tramite Expo;
+* non usa Render;
+* non usa backend;
+* non usa database remoto;
+* non usa sincronizzazione cloud.
