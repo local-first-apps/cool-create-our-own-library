@@ -20,13 +20,10 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundImage": "./assets/adaptive-background.png",
-        "backgroundColor": "#A7E3D0"
+        "backgroundColor": "#F3F4F6"
       },
       "versionCode": 1,
-      "package": "it.local.cool",
-      "permissions": [
-        "android.permission.CAMERA"
-      ]
+      "package": "it.local.cool"
     },
     "splash": {
       "image": "./assets/splash.png",
@@ -45,11 +42,6 @@
           "barcodeScannerEnabled": true
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "31a138ac-d50e-4f9e-a7d1-c7d9ce08f376"
-      }
-    }
+    ]
   }
 }
