@@ -122,7 +122,7 @@ export function SettingsScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.legalActions}>
-          <LegalLinkButton label={"Termini di\nservizio"} onPress={() => setLegalModal("terms")} />
+          <LegalLinkButton label="Termini di servizio" onPress={() => setLegalModal("terms")} />
           <LegalLinkButton label="Privacy" onPress={() => setLegalModal("privacy")} />
         </View>
       </ScrollView>
@@ -265,9 +265,10 @@ const styles = StyleSheet.create({
   },
   legalButtonText: {
     color: "#475569",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
     lineHeight: 16,
+    flexShrink: 1,
     textAlign: "center"
   },
   legalText: {
