@@ -2,6 +2,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
 import { EmptyState } from "../components/EmptyState";
@@ -14,6 +15,7 @@ import { BookFilterParams, filterBooks } from "../utils/bookFilters";
 type Props = NativeStackScreenProps<RootStackParamList, "Library">;
 
 export function LibraryScreen({ navigation, route }: Props) {
+  const insets = useSafeAreaInsets();
   const [books, setBooks] = useState<Book[]>([]);
   const [filters, setFilters] = useState<BookFilterParams>(route.params ?? {});
   const [activeLibrary, setActiveLibrary] = useState(DEFAULT_LIBRARY_NAME);
@@ -78,7 +80,10 @@ export function LibraryScreen({ navigation, route }: Props) {
           data={visibleBooks}
           keyExtractor={(item) => String(item.id)}
           ListEmptyComponent={<EmptyState message="Nessun libro trovato." />}
-          contentContainerStyle={visibleBooks.length === 0 ? styles.emptyList : styles.list}
+          contentContainerStyle={[
+            visibleBooks.length === 0 ? styles.emptyList : styles.list,
+            { paddingBottom: Math.max(insets.bottom + 32, 72) }
+          ]}
           renderItem={({ item }) => (
             <Pressable onPress={() => navigation.navigate("BookDetail", { id: item.id })} style={styles.bookItem}>
               <Text style={styles.bookTitle}>{item.title}</Text>
@@ -145,8 +150,7 @@ const styles = StyleSheet.create({
     marginBottom: 12
   },
   list: {
-    gap: 10,
-    paddingBottom: 32
+    gap: 10
   },
   loader: {
     marginTop: 32

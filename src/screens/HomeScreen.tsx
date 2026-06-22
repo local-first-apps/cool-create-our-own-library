@@ -2,6 +2,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
 import {
@@ -28,6 +29,7 @@ function resultLabel(count: number, total: number): string {
 }
 
 export function HomeScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const [books, setBooks] = useState<Book[]>([]);
   const [activeLibrary, setActiveLibrary] = useState(DEFAULT_LIBRARY_NAME);
   const [setupLibraryInput, setSetupLibraryInput] = useState(DEFAULT_LIBRARY_NAME);
@@ -230,7 +232,16 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          {
+            paddingBottom: Math.max(insets.bottom + 32, 64),
+            paddingTop: Math.max(insets.top + 12, 38)
+          }
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.header}>
           <Image resizeMode="contain" source={require("../../assets/cool-home-logo.png")} style={styles.homeLogo} />
           <View style={styles.libraryRow}>
@@ -306,7 +317,7 @@ export function HomeScreen({ navigation }: Props) {
 
       <Modal animationType="slide" onRequestClose={() => setMultiFilter(null)} transparent visible={Boolean(multiFilter)}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>{multiConfig.title}</Text>
             <Text style={styles.counter}>{multiConfig.selected.length} selezionati</Text>
             <ScrollView style={styles.pickList}>
@@ -333,7 +344,7 @@ export function HomeScreen({ navigation }: Props) {
 
       <Modal animationType="slide" onRequestClose={() => setYearPickerTarget(null)} transparent visible={Boolean(yearPickerTarget)}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>{yearPickerTarget === "from" ? "Anno iniziale" : "Anno finale"}</Text>
             <ScrollView style={styles.pickList}>
               <Pressable onPress={() => selectYearForRange(null)} style={styles.pickRow}>
@@ -355,7 +366,7 @@ export function HomeScreen({ navigation }: Props) {
 
       <Modal animationType="slide" onRequestClose={() => setYearSelectionVisible(false)} transparent visible={yearSelectionVisible}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>Anni</Text>
             <Text style={styles.counter}>{selectedYears.length} selezionati</Text>
             <ScrollView style={styles.pickList}>
@@ -380,7 +391,7 @@ export function HomeScreen({ navigation }: Props) {
 
       <Modal animationType="slide" onRequestClose={() => setExportVisible(false)} transparent visible={exportVisible}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>Esporta</Text>
             <Text style={styles.counter}>Scegli i campi, l'ordine di restituzione e poi il formato.</Text>
             <Text style={styles.exportSummary}>
@@ -443,7 +454,7 @@ export function HomeScreen({ navigation }: Props) {
 
       <Modal animationType="fade" onRequestClose={() => undefined} transparent visible={setupVisible}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>Nome biblioteca</Text>
             <Text style={styles.setupText}>Scegli il nome della tua biblioteca. Potrai modificarlo in seguito dalle impostazioni.</Text>
             <TextInput
@@ -588,7 +599,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 14,
-    paddingBottom: 46,
     paddingTop: 38
   },
   counter: {
@@ -796,8 +806,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     maxHeight: "88%",
-    padding: 16,
-    paddingBottom: 28
+    padding: 16
   },
   modalTitle: {
     color: "#111827",

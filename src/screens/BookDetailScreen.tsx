@@ -2,6 +2,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
 import { BookForm } from "../components/BookForm";
@@ -14,6 +15,7 @@ import { formatDateTime } from "../utils/date";
 type Props = NativeStackScreenProps<RootStackParamList, "BookDetail">;
 
 export function BookDetailScreen({ navigation, route }: Props) {
+  const insets = useSafeAreaInsets();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -103,7 +105,7 @@ export function BookDetailScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom + 32, 72) }]}>
       {book.thumbnail ? <Image source={{ uri: book.thumbnail }} style={styles.cover} resizeMode="contain" /> : null}
 
       <View style={styles.panel}>
@@ -143,8 +145,7 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: "#f7f8fa",
     gap: 14,
-    padding: 16,
-    paddingBottom: 32
+    padding: 16
   },
   cover: {
     alignSelf: "center",

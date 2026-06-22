@@ -1,6 +1,7 @@
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useEffect, useState } from "react";
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
 import { BookForm } from "../components/BookForm";
@@ -13,6 +14,7 @@ import { RootStackParamList } from "../types/Navigation";
 type Props = NativeStackScreenProps<RootStackParamList, "BookConfirm">;
 
 export function BookConfirmScreen({ navigation, route }: Props) {
+  const insets = useSafeAreaInsets();
   const [book, setBook] = useState<BookInput>(route.params.book);
   const [library, setLibrary] = useState(book.library ?? DEFAULT_LIBRARY_NAME);
   const [shelf, setShelf] = useState(book.shelf ?? "");
@@ -75,7 +77,7 @@ export function BookConfirmScreen({ navigation, route }: Props) {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom + 32, 72) }]}>
       {book.thumbnail ? <Image source={{ uri: book.thumbnail }} style={styles.cover} resizeMode="contain" /> : null}
 
       <View style={styles.panel}>
@@ -138,8 +140,7 @@ const styles = StyleSheet.create({
   content: {
     backgroundColor: "#f7f8fa",
     gap: 14,
-    padding: 16,
-    paddingBottom: 32
+    padding: 16
   },
   cover: {
     alignSelf: "center",

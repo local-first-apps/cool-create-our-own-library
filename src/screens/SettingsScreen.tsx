@@ -2,6 +2,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
 import { renameLibrary } from "../services/db";
@@ -20,6 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 type LegalModal = "terms" | "privacy" | null;
 
 export function SettingsScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const [deviceName, setDeviceName] = useState("");
   const [libraryName, setLibraryName] = useState("");
   const [currentLibraryName, setCurrentLibraryName] = useState("");
@@ -64,69 +66,70 @@ export function SettingsScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.field}>
-        <Text style={styles.label}>Nome biblioteca</Text>
-        <Text style={styles.description}>Nome locale della biblioteca usata su questo telefono.</Text>
-        <TextInput
-          autoCapitalize="sentences"
-          onChangeText={setLibraryName}
-          placeholder="Es. Biblioteca di casa"
-          placeholderTextColor="#8a94a6"
-          style={styles.input}
-          value={libraryName}
-        />
-      </View>
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom + 32, 72) }]}
+        keyboardShouldPersistTaps="handled"
+      >
+        <View style={styles.field}>
+          <Text style={styles.label}>Nome biblioteca</Text>
+          <Text style={styles.description}>Nome locale della biblioteca usata su questo telefono.</Text>
+          <TextInput
+            autoCapitalize="sentences"
+            onChangeText={setLibraryName}
+            placeholder="Es. Biblioteca di casa"
+            placeholderTextColor="#8a94a6"
+            style={styles.input}
+            value={libraryName}
+          />
+        </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Nome dispositivo</Text>
-        <Text style={styles.description}>Questo nome viene salvato solo sul telefono.</Text>
-        <TextInput
-          autoCapitalize="sentences"
-          onChangeText={setDeviceName}
-          placeholder="Es. iPhone Roberto"
-          placeholderTextColor="#8a94a6"
-          style={styles.input}
-          value={deviceName}
-        />
-      </View>
+        <View style={styles.field}>
+          <Text style={styles.label}>Nome dispositivo</Text>
+          <Text style={styles.description}>Questo nome viene salvato solo sul telefono.</Text>
+          <TextInput
+            autoCapitalize="sentences"
+            onChangeText={setDeviceName}
+            placeholder="Es. iPhone Roberto"
+            placeholderTextColor="#8a94a6"
+            style={styles.input}
+            value={deviceName}
+          />
+        </View>
 
-      <View style={styles.field}>
-        <Text style={styles.label}>Lingua</Text>
-        <View style={styles.languageRow}>
-          {SUPPORTED_LANGUAGES.map((item) => (
-            <Pressable
-              key={item}
-              accessibilityRole="button"
-              onPress={() => setLanguage(item)}
-              style={[styles.languageButton, item === language && styles.languageButtonActive]}
-            >
-              <Text style={[styles.languageText, item === language && styles.languageTextActive]}>{item}</Text>
-            </Pressable>
-          ))}
+        <View style={styles.field}>
+          <Text style={styles.label}>Lingua</Text>
+          <View style={styles.languageRow}>
+            {SUPPORTED_LANGUAGES.map((item) => (
+              <Pressable
+                key={item}
+                accessibilityRole="button"
+                onPress={() => setLanguage(item)}
+                style={[styles.languageButton, item === language && styles.languageButtonActive]}
+              >
+                <Text style={[styles.languageText, item === language && styles.languageTextActive]}>{item}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
-      </View>
 
-      <View style={styles.legalActions}>
-        <View style={styles.actionButton}>
-          <AppButton label="Termini di servizio" onPress={() => setLegalModal("terms")} variant="secondary" />
+        <View style={styles.actions}>
+          <View style={styles.actionButton}>
+            <AppButton label="Salva" onPress={handleSave} disabled={saving} />
+          </View>
+          <View style={styles.actionButton}>
+            <AppButton label="Annulla" onPress={() => navigation.goBack()} variant="secondary" disabled={saving} />
+          </View>
         </View>
-        <View style={styles.actionButton}>
-          <AppButton label="Privacy" onPress={() => setLegalModal("privacy")} variant="secondary" />
-        </View>
-      </View>
 
-      <View style={styles.actions}>
-        <View style={styles.actionButton}>
-          <AppButton label="Salva" onPress={handleSave} disabled={saving} />
+        <View style={styles.legalActions}>
+          <LegalLinkButton label={"Termini di\nservizio"} onPress={() => setLegalModal("terms")} />
+          <LegalLinkButton label="Privacy" onPress={() => setLegalModal("privacy")} />
         </View>
-        <View style={styles.actionButton}>
-          <AppButton label="Annulla" onPress={() => navigation.goBack()} variant="secondary" disabled={saving} />
-        </View>
-      </View>
+      </ScrollView>
 
       <Modal animationType="slide" onRequestClose={() => setLegalModal(null)} transparent visible={Boolean(legalModal)}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>{legalModal === "privacy" ? "Privacy" : "Termini di servizio"}</Text>
             <ScrollView style={styles.legalTextBox}>
               {(legalModal === "privacy" ? PRIVACY_TEXT : TERMS_TEXT).map((paragraph) => (
@@ -142,6 +145,19 @@ export function SettingsScreen({ navigation }: Props) {
         </View>
       </Modal>
     </View>
+  );
+}
+
+type LegalLinkButtonProps = {
+  label: string;
+  onPress: () => void;
+};
+
+function LegalLinkButton({ label, onPress }: LegalLinkButtonProps) {
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={styles.legalButton}>
+      <Text style={styles.legalButtonText}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -174,7 +190,9 @@ const styles = StyleSheet.create({
   },
   container: {
     backgroundColor: "#f7f8fa",
-    flex: 1,
+    flex: 1
+  },
+  content: {
     padding: 16
   },
   description: {
@@ -231,8 +249,26 @@ const styles = StyleSheet.create({
   legalActions: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 12,
-    marginTop: 2
+    marginTop: 30
+  },
+  legalButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#d7dde6",
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    minHeight: 42,
+    paddingHorizontal: 10,
+    paddingVertical: 8
+  },
+  legalButtonText: {
+    color: "#475569",
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 16,
+    textAlign: "center"
   },
   legalText: {
     color: "#334155",
@@ -256,8 +292,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
     maxHeight: "88%",
-    padding: 16,
-    paddingBottom: 28
+    padding: 16
   },
   modalTitle: {
     color: "#111827",

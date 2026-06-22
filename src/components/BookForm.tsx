@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { DEFAULT_LIBRARY_NAME, getLocations } from "../services/db";
 import { BookInput } from "../types/Book";
@@ -38,6 +39,7 @@ const FIELDS: Array<{
 ];
 
 export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: BookFormProps) {
+  const insets = useSafeAreaInsets();
   const [value, setValue] = useState<BookInput>({
     isbn: initialValue?.isbn ?? "",
     title: initialValue?.title ?? "",
@@ -81,7 +83,10 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom + 32, 72) }]}
+        keyboardShouldPersistTaps="handled"
+      >
         {FIELDS.map((field) => (
           <View key={field.key} style={styles.field}>
             <Text style={styles.label}>
@@ -157,8 +162,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: 14,
-    padding: 16,
-    paddingBottom: 32
+    padding: 16
   },
   error: {
     color: "#b91c1c",
