@@ -1,5 +1,4 @@
 import { File, Paths } from "expo-file-system";
-import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import * as XLSX from "xlsx";
 
@@ -10,10 +9,9 @@ import { DEFAULT_DEVICE_NAME } from "./settings";
 const APP_NAME = "COOL | Create Our Own Library";
 const EXCEL_MIME = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const CSV_MIME = "text/csv";
-const PDF_MIME = "application/pdf";
-const WORD_MIME = "application/msword";
+const WORD_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-export type ExportFormat = "csv" | "excel" | "word" | "pdf";
+export type ExportFormat = "csv" | "excel" | "word";
 export type ExportFieldKey =
   | "id"
   | "isbn"
@@ -263,7 +261,7 @@ function makeCsv(books: Book[], deviceName: string, fields: ExportField[], libra
   return [...metadata, ...rows].map((row) => row.map(escapeCsv).join(";")).join("\r\n");
 }
 
-function escapeHtml(value: string | number): string {
+function escapeXml(value: string | number): string {
   return String(value)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -271,58 +269,90 @@ function escapeHtml(value: string | number): string {
     .replace(/"/g, "&quot;");
 }
 
-function makeDocumentHtml(books: Book[], deviceName: string, fields: ExportField[], libraryName: string): string {
+function docxText(value: string | number, bold = false, color = "111827", size = 18): string {
+  const lines = String(value).split(/\r?\n/);
+  const runs = lines.map((line, index) => {
+    const text = `<w:t xml:space="preserve">${escapeXml(line)}</w:t>`;
+    const br = index < lines.length - 1 ? "<w:br/>" : "";
+    return `<w:r><w:rPr>${bold ? "<w:b/>" : ""}<w:color w:val="${color}"/><w:sz w:val="${size}"/></w:rPr>${text}${br}</w:r>`;
+  });
+  return runs.join("");
+}
+
+function docxCell(value: string | number, width: number, shaded = false, bold = false): string {
+  return `<w:tc>
+    <w:tcPr>
+      <w:tcW w:w="${Math.max(1, Math.round(width))}" w:type="dxa"/>
+      ${shaded ? '<w:shd w:fill="DBEAFE"/>' : ""}
+      <w:tcMar>
+        <w:top w:w="70" w:type="dxa"/>
+        <w:left w:w="70" w:type="dxa"/>
+        <w:bottom w:w="70" w:type="dxa"/>
+        <w:right w:w="70" w:type="dxa"/>
+      </w:tcMar>
+    </w:tcPr>
+    <w:p>${docxText(value, bold, "111827", shaded ? 16 : 15)}</w:p>
+  </w:tc>`;
+}
+
+function makeDocx(books: Book[], deviceName: string, fields: ExportField[], libraryName: string): Uint8Array {
   const columnWidths = documentColumnWidths(books, deviceName, fields);
-  const colgroup = fields
-    .map((_field, index) => `<col style="width:${columnWidths[index].toFixed(2)}%;">`)
-    .join("");
+  const tableWidth = 14400;
+  const docxWidths = columnWidths.map((width) => (width / 100) * tableWidth);
+  const header = `<w:tr>${fields.map((field, index) => docxCell(field.label, docxWidths[index], true, true)).join("")}</w:tr>`;
   const rows = bookRows(books, deviceName, fields)
     .map(
       (row) =>
-        `<tr>${row
-          .map((value) => `<td>${escapeHtml(value)}</td>`)
-          .join("")}</tr>`
+        `<w:tr>${row
+          .map((value, index) => docxCell(value, docxWidths[index]))
+          .join("")}</w:tr>`
     )
     .join("");
-  const header = fields.map((field) => `<th>${escapeHtml(field.label)}</th>`).join("");
 
-  return `<!doctype html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>${APP_NAME}</title>
-    <style>
-      @page { size: A4 landscape; margin: 12mm; }
-      @page WordSection1 { size: 841.95pt 595.35pt; margin: 34pt 34pt 34pt 34pt; mso-page-orientation: landscape; }
-      html, body { margin: 0; padding: 0; width: 100%; }
-      body { box-sizing: border-box; color: #111827; font-family: Arial, sans-serif; padding: 0; }
-      .page { box-sizing: border-box; page: WordSection1; width: 100%; }
-      .header { align-items: center; border-bottom: 2px solid #2563EB; display: flex; gap: 10px; margin-bottom: 8px; padding-bottom: 7px; }
-      .logo { align-items: center; background: #2563EB; border-radius: 7px; color: #ffffff; display: flex; font-size: 16px; font-weight: 800; height: 36px; justify-content: center; width: 64px; }
-      .app { font-size: 17px; font-weight: 800; }
-      .meta { color: #475569; font-size: 9px; margin-top: 2px; }
-      table { border-collapse: collapse; font-size: 8px; table-layout: fixed; width: 100%; mso-table-layout-alt: fixed; }
-      th { background: #DBEAFE; border: 1px solid #94a3b8; color: #111827; font-size: 7.5px; line-height: 1.12; padding: 3px; text-align: left; vertical-align: top; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
-      td { border: 1px solid #cbd5e1; line-height: 1.18; padding: 3px; vertical-align: top; white-space: normal; word-break: break-word; overflow-wrap: anywhere; }
-    </style>
-  </head>
-  <body>
-    <div class="page WordSection1">
-      <div class="header">
-        <div class="logo">COOL</div>
-        <div>
-          <div class="app">${APP_NAME}</div>
-          <div class="meta">Biblioteca: ${escapeHtml(libraryName)} | Libri esportati: ${books.length} | Data export: ${escapeHtml(new Date().toLocaleString())}</div>
-        </div>
-      </div>
-      <table>
-        <colgroup>${colgroup}</colgroup>
-        <thead><tr>${header}</tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>
-  </body>
-</html>`;
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:body>
+    <w:p>
+      <w:r><w:rPr><w:b/><w:color w:val="2563EB"/><w:sz w:val="32"/></w:rPr><w:t>COOL</w:t></w:r>
+      <w:r><w:rPr><w:b/><w:color w:val="111827"/><w:sz w:val="24"/></w:rPr><w:t xml:space="preserve"> | Create Our Own Library</w:t></w:r>
+    </w:p>
+    <w:p>${docxText(`Biblioteca: ${libraryName} | Libri esportati: ${books.length} | Data export: ${new Date().toLocaleString()}`, false, "475569", 16)}</w:p>
+    <w:tbl>
+      <w:tblPr>
+        <w:tblW w:w="${tableWidth}" w:type="dxa"/>
+        <w:tblLayout w:type="fixed"/>
+        <w:tblBorders>
+          <w:top w:val="single" w:sz="4" w:color="94A3B8"/>
+          <w:left w:val="single" w:sz="4" w:color="94A3B8"/>
+          <w:bottom w:val="single" w:sz="4" w:color="94A3B8"/>
+          <w:right w:val="single" w:sz="4" w:color="94A3B8"/>
+          <w:insideH w:val="single" w:sz="4" w:color="CBD5E1"/>
+          <w:insideV w:val="single" w:sz="4" w:color="CBD5E1"/>
+        </w:tblBorders>
+      </w:tblPr>
+      ${header}
+      ${rows}
+    </w:tbl>
+    <w:sectPr>
+      <w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/>
+      <w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/>
+    </w:sectPr>
+  </w:body>
+</w:document>`;
+
+  const zip = XLSX.CFB.utils.cfb_new();
+  XLSX.CFB.utils.cfb_add(zip, "[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`);
+  XLSX.CFB.utils.cfb_add(zip, "_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`);
+  XLSX.CFB.utils.cfb_add(zip, "word/document.xml", documentXml);
+  return XLSX.CFB.write(zip, { type: "buffer" }) as Uint8Array;
 }
 
 async function shareFile(file: File, mimeType: string, dialogTitle: string, UTI?: string): Promise<string> {
@@ -364,28 +394,10 @@ export async function exportBooks(
   }
 
   if (format === "word") {
-    const file = new File(Paths.document, `${baseName}.doc`);
+    const file = new File(Paths.document, `${baseName}.docx`);
     file.create({ overwrite: true });
-    file.write(makeDocumentHtml(sortedBooks, deviceName, fields, libraryName));
-    return shareFile(file, WORD_MIME, "Esporta Word", "com.microsoft.word.doc");
-  }
-
-  if (format === "pdf") {
-    const pdf = await Print.printToFileAsync({
-      base64: true,
-      height: 793,
-      html: makeDocumentHtml(sortedBooks, deviceName, fields, libraryName),
-      width: 1122
-    });
-
-    if (!pdf.base64) {
-      throw new Error("Non e' stato possibile generare il PDF.");
-    }
-
-    const file = new File(Paths.document, `${baseName}.pdf`);
-    file.create({ overwrite: true });
-    file.write(pdf.base64, { encoding: "base64" });
-    return shareFile(file, PDF_MIME, "Esporta PDF", "com.adobe.pdf");
+    file.write(makeDocx(sortedBooks, deviceName, fields, libraryName));
+    return shareFile(file, WORD_MIME, "Esporta Word", "org.openxmlformats.wordprocessingml.document");
   }
 
   const workbook = makeWorkbook(sortedBooks, deviceName, fields, libraryName);

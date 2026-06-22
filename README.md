@@ -23,7 +23,7 @@ App mobile per iOS e Android, realizzata con Expo, React Native e TypeScript, pe
 - Filtri per testo, autore, categoria, lingua, posizione e anno.
 - Visualizzazione completa della biblioteca o vista filtrata.
 - Nome dispositivo salvato localmente.
-- Export CSV, Excel, Word e PDF.
+- Export CSV, Excel e Word.
 - Export completo o limitato ai risultati filtrati.
 - Selezione dei campi esportabili e ordine parziale delle colonne.
 - ISBN esportato come testo in Excel.
@@ -83,7 +83,7 @@ L'app chiede il permesso quando si apre la schermata `Scansiona libro`.
 6. Usa `Aggiungi manualmente` se il libro non viene trovato.
 7. Usa `Visualizza biblioteca` per l'elenco completo.
 8. Usa i filtri in Home per creare una vista filtrata.
-9. Usa `Esporta` per generare CSV, Excel, Word o PDF.
+9. Usa `Esporta` per generare CSV, Excel o Word.
 10. Usa `Impostazioni` per nome biblioteca, nome dispositivo, lingua, privacy e termini.
 11. Usa `Istruzioni` per una guida sintetica dentro l'app.
 
@@ -94,16 +94,15 @@ Il pulsante `Esporta` permette di scegliere:
 - risultati filtrati o biblioteca completa;
 - campi da esportare;
 - ordine parziale delle colonne;
-- formato: CSV, Excel, Word o PDF.
+- formato: CSV, Excel o Word.
 
 I file usano il nome della biblioteca e data/ora di export.
 
 Note:
 
 - Excel viene generato in `.xlsx`.
-- Word e' attualmente generato come `.doc` HTML.
-- PDF e' disponibile, ma resta da rivalutare se la leggibilita' non sara' sufficiente.
-- Il passaggio a `.docx` reale e' segnato nella roadmap.
+- Word viene generato come `.docx`.
+- Il PDF non e' previsto: si puo' ricavare facilmente da Excel o Word se necessario.
 
 ## Uso su piu' telefoni
 

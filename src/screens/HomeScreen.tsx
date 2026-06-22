@@ -469,7 +469,6 @@ export function HomeScreen({ navigation }: Props) {
               <ModalActionButton label="CSV" onPress={() => void exportSelected("csv")} disabled={exporting} />
               <ModalActionButton label="Excel" onPress={() => void exportSelected("excel")} disabled={exporting} />
               <ModalActionButton label="Word" onPress={() => void exportSelected("word")} disabled={exporting} />
-              <ModalActionButton label="PDF" onPress={() => void exportSelected("pdf")} disabled={exporting} />
             </View>
           </View>
         </View>

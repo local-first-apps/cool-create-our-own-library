@@ -177,7 +177,7 @@ const TERMS_TEXT = [
   "L'utente e' responsabile dei dati inseriti, delle modifiche, delle cancellazioni e dei file esportati.",
   "Le informazioni recuperate da Google Books possono essere incomplete, inesatte o non disponibili. L'utente puo' correggere manualmente i dati prima o dopo il salvataggio.",
   "L'app non offre sincronizzazione cloud, account utente, backup remoto o recupero automatico dei dati. E' consigliabile esportare periodicamente la biblioteca.",
-  "I file CSV, Excel, Word e PDF sono generati sul telefono e possono essere condivisi tramite le funzioni del sistema operativo.",
+  "I file CSV, Excel e Word sono generati sul telefono e possono essere condivisi tramite le funzioni del sistema operativo.",
   "Il servizio e' fornito senza garanzia di disponibilita' continua o assenza di errori. Per una distribuzione commerciale, questi termini andranno verificati e adattati al paese di pubblicazione."
 ];
 

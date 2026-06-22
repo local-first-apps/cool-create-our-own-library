@@ -59,19 +59,16 @@ Queste modifiche conviene farle prima di produrre una build installabile, perche
    - Selettore nelle impostazioni.
    - Prima tradurre l'interfaccia stabile, poi aggiungere nuove schermate.
 
-8. **Import Excel con rimozione doppioni**
-   - Importare file `.xlsx` esportati dall'app.
-   - Usare ISBN come chiave principale.
-   - Se manca ISBN, usare `Titolo + Autori + Anno`.
-   - Mostrare riepilogo: importati, saltati per duplicato, righe con errori.
+8. **Import Excel con rimozione doppioni** - ABBANDONATO
+   - Evolutiva rimossa dalla prima roadmap.
+   - L'unione dei file prodotti da telefoni diversi resta un'operazione manuale fuori dall'app.
 
 9. **Revisione export**
    - Rivedere struttura e leggibilita' di CSV, Excel e Word.
    - Valutare export completo e export filtrato come azioni distinte.
    - Verificare intestazioni, ordinamento colonne e nome file.
-   - Migliorare il formato Word se serve un documento piu' elegante.
-   - Valutare passaggio da Word `.doc` HTML a `.docx` reale, coerente con Excel `.xlsx`.
-   - Tenere il PDF disponibile per ora, ma rivalutare se mantenerlo o rimuoverlo se resta poco leggibile.
+   - Word in formato `.docx` reale.
+   - PDF rimosso: si puo' ricavare facilmente da Excel o Word.
 
 ## Dopo la build stand-alone di prova
 
@@ -97,7 +94,7 @@ La commercializzazione e' fattibile, ma va affrontata dopo avere stabilizzato:
 
 - nome e brand COOL;
 - modello dati;
-- import/export;
+- export;
 - privacy policy;
 - gestione API key Google Books;
 - build firmate Android/iOS.
