@@ -29,6 +29,7 @@ export type ExportFieldKey =
   | "createdAt"
   | "updatedAt"
   | "device";
+export type ExportLabels = Partial<Record<ExportFieldKey, string>>;
 
 type ExportField = {
   key: ExportFieldKey;
@@ -62,12 +63,13 @@ export const EXPORT_FIELDS: ExportField[] = [
 
 export const DEFAULT_EXPORT_FIELD_KEYS = EXPORT_FIELDS.map((field) => field.key);
 
-function selectedFields(fieldKeys?: ExportFieldKey[]): ExportField[] {
+function selectedFields(fieldKeys?: ExportFieldKey[], labels?: ExportLabels): ExportField[] {
   const requested = fieldKeys && fieldKeys.length > 0 ? fieldKeys : DEFAULT_EXPORT_FIELD_KEYS;
   const fields = requested
     .map((key) => EXPORT_FIELDS.find((field) => field.key === key))
     .filter((field): field is ExportField => Boolean(field));
-  return fields.length > 0 ? fields : EXPORT_FIELDS;
+  const selected = fields.length > 0 ? fields : EXPORT_FIELDS;
+  return selected.map((field) => ({ ...field, label: labels?.[field.key] ?? field.label }));
 }
 
 function toUint8Array(data: ArrayBuffer | Uint8Array | number[]): Uint8Array {
@@ -343,13 +345,14 @@ export async function exportBooks(
   deviceName: string,
   format: ExportFormat,
   libraryName = "biblioteca",
-  fieldKeys?: ExportFieldKey[]
+  fieldKeys?: ExportFieldKey[],
+  labels?: ExportLabels
 ): Promise<string> {
   if (books.length === 0) {
     throw new Error("Nessun libro presente da esportare.");
   }
 
-  const fields = selectedFields(fieldKeys);
+  const fields = selectedFields(fieldKeys, labels);
   const sortedBooks = sortBooksForExport(books, deviceName, fields);
   const baseName = `${safeFilePart(libraryName)}_${fileStamp()}`;
 

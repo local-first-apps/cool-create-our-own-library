@@ -5,10 +5,12 @@ import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleShe
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
+import { exportFieldLabelKey, useI18n } from "../i18n";
 import {
   DEFAULT_EXPORT_FIELD_KEYS,
   EXPORT_FIELDS,
   ExportFieldKey,
+  ExportLabels,
   exportBooks,
   ExportFormat
 } from "../services/excelExport";
@@ -24,12 +26,9 @@ type YearPickerTarget = "from" | "to";
 type MultiFilterKey = "authors" | "categories" | "languages" | "locations";
 type ExportScope = "filtered" | "all";
 
-function resultLabel(count: number, total: number): string {
-  return `${count} ${count === 1 ? "risultato" : "risultati"} su ${total}`;
-}
-
 export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
   const [activeLibrary, setActiveLibrary] = useState(DEFAULT_LIBRARY_NAME);
   const [setupLibraryInput, setSetupLibraryInput] = useState(DEFAULT_LIBRARY_NAME);
@@ -67,11 +66,11 @@ export function HomeScreen({ navigation }: Props) {
       setSetupVisible(!storedLibrary);
       setDeviceName(settings.deviceName);
     } catch (err) {
-      Alert.alert("Errore database", err instanceof Error ? err.message : "Impossibile leggere la biblioteca locale.");
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -140,6 +139,14 @@ export function HomeScreen({ navigation }: Props) {
       yearFrom ||
       yearTo
   );
+  const exportLabels = useMemo<ExportLabels>(
+    () =>
+      EXPORT_FIELDS.reduce<ExportLabels>((labels, field) => {
+        labels[field.key] = t(exportFieldLabelKey(field.key));
+        return labels;
+      }, {}),
+    [t]
+  );
 
   async function saveInitialLibrary() {
     try {
@@ -149,7 +156,7 @@ export function HomeScreen({ navigation }: Props) {
       setSetupVisible(false);
       setBooks(await getBooks(library));
     } catch (err) {
-      Alert.alert("Errore", err instanceof Error ? err.message : "Impossibile salvare il nome biblioteca.");
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     }
   }
 
@@ -211,17 +218,17 @@ export function HomeScreen({ navigation }: Props) {
 
   async function exportSelected(format: ExportFormat) {
     if (selectedExportFields.length === 0) {
-      Alert.alert("Campi export", "Seleziona almeno un campo da esportare.");
+      Alert.alert(t("exportSelectFieldsTitle"), t("exportSelectFields"));
       return;
     }
 
     try {
       setExporting(true);
       const booksToExport = exportScope === "filtered" ? visibleBooks : books;
-      await exportBooks(booksToExport, deviceName, format, activeLibrary, selectedExportFieldsInOrder());
+      await exportBooks(booksToExport, deviceName, format, activeLibrary, selectedExportFieldsInOrder(), exportLabels);
       setExportVisible(false);
     } catch (err) {
-      Alert.alert("Errore esportazione", err instanceof Error ? err.message : "Impossibile esportare il file.");
+      Alert.alert(t("exportTitle"), err instanceof Error ? err.message : t("exportNoBooks"));
     } finally {
       setExporting(false);
     }
@@ -248,31 +255,33 @@ export function HomeScreen({ navigation }: Props) {
             <Text numberOfLines={1} style={styles.subtitle}>
               {activeLibrary}
             </Text>
-            <Text style={styles.bookCount}>{books.length} libri</Text>
+            <Text style={styles.bookCount}>{t("bookCount", { count: books.length })}</Text>
           </View>
         </View>
 
         <View style={styles.actions}>
-          <AppButton label="Scansiona libro" onPress={() => navigation.navigate("Scanner")} />
+          <AppButton label={t("scanBook")} onPress={() => navigation.navigate("Scanner")} />
           <AppButton
-            label="Aggiungi manualmente"
+            label={t("addManually")}
             onPress={() => navigation.navigate("ManualBook", { initialBook: { library: activeLibrary } })}
             variant="secondary"
           />
-          <AppButton label="Visualizza biblioteca" onPress={() => navigation.navigate("Library")} variant="secondary" />
-          <AppButton label="Esporta" onPress={handleExport} variant="secondary" disabled={exporting} />
-          <AppButton label="Impostazioni" onPress={() => navigation.navigate("Settings")} variant="secondary" />
-          <AppButton label="Istruzioni" onPress={() => navigation.navigate("Instructions")} variant="secondary" />
+          <AppButton label={t("viewLibrary")} onPress={() => navigation.navigate("Library")} variant="secondary" />
+          <AppButton label={t("export")} onPress={handleExport} variant="secondary" disabled={exporting} />
+          <AppButton label={t("settings")} onPress={() => navigation.navigate("Settings")} variant="secondary" />
+          <AppButton label={t("instructions")} onPress={() => navigation.navigate("Instructions")} variant="secondary" />
         </View>
 
         <View style={styles.filters}>
-          <Text style={styles.sectionTitle}>Filtri</Text>
-          <Text style={styles.counter}>{loading ? "Caricamento..." : resultLabel(visibleBooks.length, books.length)}</Text>
+          <Text style={styles.sectionTitle}>{t("filters")}</Text>
+          <Text style={styles.counter}>
+            {loading ? t("loading") : t("resultCount", { count: visibleBooks.length, total: books.length })}
+          </Text>
           <View style={styles.searchRow}>
             <TextInput
               autoCapitalize="none"
               onChangeText={setSearch}
-              placeholder="Cerca..."
+              placeholder={t("searchPlaceholder")}
               placeholderTextColor="#8a94a6"
               style={styles.input}
               value={search}
@@ -286,13 +295,13 @@ export function HomeScreen({ navigation }: Props) {
           </View>
 
           <View style={styles.filterGrid}>
-            <FilterPickerButton count={selectedCategories.length} label="Categorie" onPress={() => setMultiFilter("categories")} />
-            <FilterPickerButton count={selectedAuthors.length} label="Autori" onPress={() => setMultiFilter("authors")} />
-            <FilterPickerButton count={selectedLanguages.length} label="Lingue" onPress={() => setMultiFilter("languages")} />
-            <FilterPickerButton count={selectedLocations.length} label="Posizioni" onPress={() => setMultiFilter("locations")} />
+            <FilterPickerButton count={selectedCategories.length} label={t("categories")} onPress={() => setMultiFilter("categories")} />
+            <FilterPickerButton count={selectedAuthors.length} label={t("authors")} onPress={() => setMultiFilter("authors")} />
+            <FilterPickerButton count={selectedLanguages.length} label={t("languages")} onPress={() => setMultiFilter("languages")} />
+            <FilterPickerButton count={selectedLocations.length} label={t("locations")} onPress={() => setMultiFilter("locations")} />
           </View>
 
-          <Text style={styles.filterLabel}>Anni</Text>
+          <Text style={styles.filterLabel}>{t("years")}</Text>
           <View style={styles.yearRangeRow}>
             <Pressable
               disabled={years.length === 0}
@@ -300,7 +309,7 @@ export function HomeScreen({ navigation }: Props) {
               style={[styles.rangeButton, years.length === 0 && styles.rangeButtonDisabled]}
             >
               <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
-                Dal: {yearFrom ?? "-"}
+                {t("from")}: {yearFrom ?? "-"}
               </Text>
             </Pressable>
             <Pressable
@@ -309,7 +318,7 @@ export function HomeScreen({ navigation }: Props) {
               style={[styles.rangeButton, years.length === 0 && styles.rangeButtonDisabled]}
             >
               <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
-                Al: {yearTo ?? "-"}
+                {t("to")}: {yearTo ?? "-"}
               </Text>
             </Pressable>
             <Pressable
@@ -318,7 +327,7 @@ export function HomeScreen({ navigation }: Props) {
               style={[styles.rangeButtonWide, years.length === 0 && styles.rangeButtonDisabled]}
             >
               <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
-                {selectedYears.length > 0 ? `Anni (${selectedYears.length})` : "Seleziona"}
+                {selectedYears.length > 0 ? `${t("years")} (${selectedYears.length})` : t("select")}
               </Text>
             </Pressable>
           </View>
@@ -331,7 +340,7 @@ export function HomeScreen({ navigation }: Props) {
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             <Text style={styles.modalTitle}>{multiConfig.title}</Text>
-            <Text style={styles.counter}>{multiConfig.selected.length} selezionati</Text>
+            <Text style={styles.counter}>{t("selectedCount", { count: multiConfig.selected.length })}</Text>
             <ScrollView style={styles.pickList}>
               {multiConfig.values.map((value) => (
                 <Pressable
@@ -346,9 +355,9 @@ export function HomeScreen({ navigation }: Props) {
               ))}
             </ScrollView>
             <View style={styles.modalActions}>
-              <ModalActionButton label="Applica" onPress={() => setMultiFilter(null)} />
-              <ModalActionButton label="Cancella" onPress={multiConfig.clear} variant="secondary" />
-              <ModalActionButton label="Annulla" onPress={() => setMultiFilter(null)} variant="secondary" />
+              <ModalActionButton label={t("apply")} onPress={() => setMultiFilter(null)} />
+              <ModalActionButton label={t("clear")} onPress={multiConfig.clear} variant="secondary" />
+              <ModalActionButton label={t("cancel")} onPress={() => setMultiFilter(null)} variant="secondary" />
             </View>
           </View>
         </View>
@@ -357,10 +366,10 @@ export function HomeScreen({ navigation }: Props) {
       <Modal animationType="slide" onRequestClose={() => setYearPickerTarget(null)} transparent visible={Boolean(yearPickerTarget)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>{yearPickerTarget === "from" ? "Anno iniziale" : "Anno finale"}</Text>
+            <Text style={styles.modalTitle}>{yearPickerTarget === "from" ? t("yearStart") : t("yearEnd")}</Text>
             <ScrollView style={styles.pickList}>
               <Pressable onPress={() => selectYearForRange(null)} style={styles.pickRow}>
-                <Text style={styles.pickRowText}>Nessun limite</Text>
+                <Text style={styles.pickRowText}>{t("noLimit")}</Text>
               </Pressable>
               {years.map((year) => (
                 <Pressable key={year} onPress={() => selectYearForRange(year)} style={styles.pickRow}>
@@ -369,8 +378,8 @@ export function HomeScreen({ navigation }: Props) {
               ))}
             </ScrollView>
             <View style={styles.modalActions}>
-              <ModalActionButton label="Cancella" onPress={() => selectYearForRange(null)} variant="secondary" />
-              <ModalActionButton label="Annulla" onPress={() => setYearPickerTarget(null)} variant="secondary" />
+              <ModalActionButton label={t("clear")} onPress={() => selectYearForRange(null)} variant="secondary" />
+              <ModalActionButton label={t("cancel")} onPress={() => setYearPickerTarget(null)} variant="secondary" />
             </View>
           </View>
         </View>
@@ -379,8 +388,8 @@ export function HomeScreen({ navigation }: Props) {
       <Modal animationType="slide" onRequestClose={() => setYearSelectionVisible(false)} transparent visible={yearSelectionVisible}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>Anni</Text>
-            <Text style={styles.counter}>{selectedYears.length} selezionati</Text>
+            <Text style={styles.modalTitle}>{t("years")}</Text>
+            <Text style={styles.counter}>{t("selectedCount", { count: selectedYears.length })}</Text>
             <ScrollView style={styles.pickList}>
               {years.map((year) => (
                 <Pressable
@@ -393,9 +402,9 @@ export function HomeScreen({ navigation }: Props) {
               ))}
             </ScrollView>
             <View style={styles.modalActions}>
-              <ModalActionButton label="Applica" onPress={() => setYearSelectionVisible(false)} />
-              <ModalActionButton label="Cancella" onPress={() => setSelectedYears([])} variant="secondary" />
-              <ModalActionButton label="Annulla" onPress={() => setYearSelectionVisible(false)} variant="secondary" />
+              <ModalActionButton label={t("apply")} onPress={() => setYearSelectionVisible(false)} />
+              <ModalActionButton label={t("clear")} onPress={() => setSelectedYears([])} variant="secondary" />
+              <ModalActionButton label={t("cancel")} onPress={() => setYearSelectionVisible(false)} variant="secondary" />
             </View>
           </View>
         </View>
@@ -404,36 +413,36 @@ export function HomeScreen({ navigation }: Props) {
       <Modal animationType="slide" onRequestClose={() => setExportVisible(false)} transparent visible={exportVisible}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>Esporta</Text>
-            <Text style={styles.counter}>Scegli i campi, l'ordine di restituzione e poi il formato.</Text>
+            <Text style={styles.modalTitle}>{t("export")}</Text>
+            <Text style={styles.counter}>{t("exportFieldsBody")}</Text>
             <Text style={styles.exportSummary}>
               {exportScope === "filtered" && filtersActive
-                ? `Export: ${visibleBooks.length} ${visibleBooks.length === 1 ? "libro filtrato" : "libri filtrati"} su ${books.length}`
-                : `Export: biblioteca completa, ${books.length} ${books.length === 1 ? "libro" : "libri"}`}
+                ? t("exportFiltered", { count: visibleBooks.length, total: books.length })
+                : t("exportAll", { count: books.length })}
             </Text>
             <View style={styles.exportScopeRow}>
               <ExportScopeButton
                 active={exportScope === "filtered"}
                 disabled={!filtersActive}
-                label="Risultati filtrati"
+                label={t("filteredResults")}
                 onPress={() => setExportScope("filtered")}
               />
               <ExportScopeButton
                 active={exportScope === "all"}
-                label="Tutta la biblioteca"
+                label={t("allLibrary")}
                 onPress={() => setExportScope("all")}
               />
             </View>
             <View style={styles.modalActions}>
               <ModalActionButton
-                label={allExportFieldsSelected ? "Deseleziona tutti" : "Seleziona tutti"}
+                label={allExportFieldsSelected ? t("deselectAll") : t("selectAll")}
                 onPress={() => {
                   setSelectedExportFields(allExportFieldsSelected ? [] : DEFAULT_EXPORT_FIELD_KEYS);
                   setExportFieldOrder([]);
                 }}
                 variant="secondary"
               />
-              <ModalActionButton label="Annulla" onPress={() => setExportVisible(false)} variant="secondary" />
+              <ModalActionButton label={t("cancel")} onPress={() => setExportVisible(false)} variant="secondary" />
             </View>
             <ScrollView style={styles.exportFieldList}>
               {EXPORT_FIELDS.map((field) => {
@@ -442,7 +451,9 @@ export function HomeScreen({ navigation }: Props) {
                 return (
                   <View key={field.key} style={[styles.exportPickRow, active && styles.pickRowActive]}>
                     <Pressable onPress={() => toggleExportField(field.key)} style={styles.exportPickLabel}>
-                      <Text style={[styles.pickRowText, active && styles.pickRowTextActive]}>{field.label}</Text>
+                      <Text style={[styles.pickRowText, active && styles.pickRowTextActive]}>
+                        {t(exportFieldLabelKey(field.key))}
+                      </Text>
                     </Pressable>
                     {active ? (
                       <Pressable onPress={() => toggleExportFieldOrder(field.key)} style={styles.orderButton}>
@@ -453,7 +464,7 @@ export function HomeScreen({ navigation }: Props) {
                 );
               })}
             </ScrollView>
-            <Text style={styles.filterLabel}>Formato</Text>
+            <Text style={styles.filterLabel}>{t("format")}</Text>
             <View style={styles.exportFormatGrid}>
               <ModalActionButton label="CSV" onPress={() => void exportSelected("csv")} disabled={exporting} />
               <ModalActionButton label="Excel" onPress={() => void exportSelected("excel")} disabled={exporting} />
@@ -467,18 +478,18 @@ export function HomeScreen({ navigation }: Props) {
       <Modal animationType="fade" onRequestClose={() => undefined} transparent visible={setupVisible}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>Nome biblioteca</Text>
-            <Text style={styles.setupText}>Scegli il nome della tua biblioteca. Potrai modificarlo in seguito dalle impostazioni.</Text>
+            <Text style={styles.modalTitle}>{t("libraryName")}</Text>
+            <Text style={styles.setupText}>{t("librarySetupBody")}</Text>
             <TextInput
               autoCapitalize="sentences"
               onChangeText={setSetupLibraryInput}
-              placeholder="Es. Biblioteca di casa"
+              placeholder={t("librarySetupPlaceholder")}
               placeholderTextColor="#8a94a6"
               style={styles.inputFull}
               value={setupLibraryInput}
             />
             <View style={styles.modalActions}>
-              <AppButton label="Salva" onPress={saveInitialLibrary} />
+              <AppButton label={t("save")} onPress={saveInitialLibrary} />
             </View>
           </View>
         </View>
@@ -492,7 +503,7 @@ export function HomeScreen({ navigation }: Props) {
         clear: () => setSelectedAuthors([]),
         label: formatAuthorLabel,
         selected: selectedAuthors,
-        title: "Autori",
+        title: t("authors"),
         toggle: (value: string) => toggleInList(value, selectedAuthors, setSelectedAuthors),
         values: authors
       };
@@ -502,7 +513,7 @@ export function HomeScreen({ navigation }: Props) {
         clear: () => setSelectedLanguages([]),
         label: (value: string) => value,
         selected: selectedLanguages,
-        title: "Lingue",
+        title: t("languages"),
         toggle: (value: string) => toggleInList(value, selectedLanguages, setSelectedLanguages),
         values: languages
       };
@@ -512,7 +523,7 @@ export function HomeScreen({ navigation }: Props) {
         clear: () => setSelectedLocations([]),
         label: (value: string) => value,
         selected: selectedLocations,
-        title: "Posizioni",
+        title: t("locations"),
         toggle: (value: string) => toggleInList(value, selectedLocations, setSelectedLocations),
         values: positions
       };
@@ -521,7 +532,7 @@ export function HomeScreen({ navigation }: Props) {
       clear: () => setSelectedCategories([]),
       label: (value: string) => value,
       selected: selectedCategories,
-      title: "Categorie",
+      title: t("categories"),
       toggle: (value: string) => toggleInList(value, selectedCategories, setSelectedCategories),
       values: categories
     };

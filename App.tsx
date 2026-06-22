@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { I18nProvider, useI18n } from "./src/i18n";
 import { BookConfirmScreen } from "./src/screens/BookConfirmScreen";
 import { BookDetailScreen } from "./src/screens/BookDetailScreen";
 import { HomeScreen } from "./src/screens/HomeScreen";
@@ -45,9 +46,11 @@ export default function App() {
   if (error) {
     return (
       <SafeAreaProvider>
-        <View style={styles.centered}>
-          <Text style={styles.errorText}>{error}</Text>
-        </View>
+        <I18nProvider>
+          <View style={styles.centered}>
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        </I18nProvider>
       </SafeAreaProvider>
     );
   }
@@ -55,42 +58,54 @@ export default function App() {
   if (!ready || !splashDone) {
     return (
       <SafeAreaProvider>
-        <View style={styles.splashContainer}>
-          <Image
-            onError={() => setSplashImageLoaded(true)}
-            onLoad={() => setSplashImageLoaded(true)}
-            resizeMode="cover"
-            source={require("./assets/splash-app.png")}
-            style={styles.splashImage}
-          />
-        </View>
+        <I18nProvider>
+          <View style={styles.splashContainer}>
+            <Image
+              onError={() => setSplashImageLoaded(true)}
+              onLoad={() => setSplashImageLoaded(true)}
+              resizeMode="cover"
+              source={require("./assets/splash-app.png")}
+              style={styles.splashImage}
+            />
+          </View>
+        </I18nProvider>
       </SafeAreaProvider>
     );
   }
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <Stack.Navigator
-          screenOptions={{
-            headerTitleAlign: "center",
-            headerStyle: { backgroundColor: "#f7f8fa" },
-            headerShadowVisible: false,
-            contentStyle: { backgroundColor: "#f7f8fa" }
-          }}
-        >
-          <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
-          <Stack.Screen name="Library" component={LibraryScreen} options={{ title: "Biblioteca" }} />
-          <Stack.Screen name="Scanner" component={ScannerScreen} options={{ title: "Scansiona libro" }} />
-          <Stack.Screen name="BookConfirm" component={BookConfirmScreen} options={{ title: "Conferma libro" }} />
-          <Stack.Screen name="ManualBook" component={ManualBookScreen} options={{ title: "Aggiungi manualmente" }} />
-          <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ title: "Dettaglio libro" }} />
-          <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: "Impostazioni" }} />
-          <Stack.Screen name="Instructions" component={InstructionsScreen} options={{ title: "Istruzioni" }} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <I18nProvider>
+        <AppNavigator />
+      </I18nProvider>
     </SafeAreaProvider>
+  );
+}
+
+function AppNavigator() {
+  const { t } = useI18n();
+
+  return (
+    <NavigationContainer>
+      <StatusBar style="dark" />
+      <Stack.Navigator
+        screenOptions={{
+          headerTitleAlign: "center",
+          headerStyle: { backgroundColor: "#f7f8fa" },
+          headerShadowVisible: false,
+          contentStyle: { backgroundColor: "#f7f8fa" }
+        }}
+      >
+        <Stack.Screen name="Home" component={HomeScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="Library" component={LibraryScreen} options={{ title: t("library") }} />
+        <Stack.Screen name="Scanner" component={ScannerScreen} options={{ title: t("scanBook") }} />
+        <Stack.Screen name="BookConfirm" component={BookConfirmScreen} options={{ title: t("confirmBook") }} />
+        <Stack.Screen name="ManualBook" component={ManualBookScreen} options={{ title: t("manualAdd") }} />
+        <Stack.Screen name="BookDetail" component={BookDetailScreen} options={{ title: t("bookDetail") }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: t("settings") }} />
+        <Stack.Screen name="Instructions" component={InstructionsScreen} options={{ title: t("instructions") }} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 

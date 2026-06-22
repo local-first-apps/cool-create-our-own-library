@@ -5,6 +5,7 @@ import { useCallback, useState } from "react";
 import { ActivityIndicator, Alert, Linking, StyleSheet, Text, View } from "react-native";
 
 import { AppButton } from "../components/AppButton";
+import { useI18n } from "../i18n";
 import { fetchBookByIsbn } from "../services/googleBooks";
 import { getActiveLibrary } from "../services/settings";
 import { RootStackParamList } from "../types/Navigation";
@@ -13,16 +14,17 @@ import { isLikelyIsbn13, normalizeIsbn } from "../utils/isbn";
 type Props = NativeStackScreenProps<RootStackParamList, "Scanner">;
 
 export function ScannerScreen({ navigation }: Props) {
+  const { t } = useI18n();
   const [permission, requestPermission] = useCameraPermissions();
   const isFocused = useIsFocused();
   const [locked, setLocked] = useState(false);
-  const [message, setMessage] = useState("Inquadra il codice a barre EAN-13 del libro.");
+  const [message, setMessage] = useState(t("scanHint"));
 
   useFocusEffect(
     useCallback(() => {
       setLocked(false);
-      setMessage("Inquadra il codice a barre EAN-13 del libro.");
-    }, [])
+      setMessage(t("scanHint"));
+    }, [t])
   );
 
   async function handleBarcodeScanned(result: BarcodeScanningResult) {
@@ -34,21 +36,21 @@ export function ScannerScreen({ navigation }: Props) {
     setLocked(true);
 
     if (!isLikelyIsbn13(isbn)) {
-      setMessage("Codice non riconosciuto come ISBN");
-      Alert.alert("ISBN non valido", "Codice non riconosciuto come ISBN", [
-        { text: "Riprova", onPress: () => setLocked(false) }
+      setMessage(t("invalidIsbnBody"));
+      Alert.alert(t("invalidIsbn"), t("invalidIsbnBody"), [
+        { text: t("retry"), onPress: () => setLocked(false) }
       ]);
       return;
     }
 
     try {
-      setMessage("Ricerca libro su Google Books...");
+      setMessage(t("googleSearch"));
       const book = await fetchBookByIsbn(isbn);
       const activeLibrary = await getActiveLibrary();
       if (!book) {
-        Alert.alert("Libro non trovato", "Nessun risultato trovato su Google Books per questo ISBN.", [
-          { text: "Riprova", onPress: () => setLocked(false) },
-          { text: "Aggiungi manualmente", onPress: () => navigation.navigate("ManualBook", { initialBook: { isbn, library: activeLibrary } }) }
+        Alert.alert(t("bookNotFound"), t("bookNotFoundBody"), [
+          { text: t("retry"), onPress: () => setLocked(false) },
+          { text: t("addManually"), onPress: () => navigation.navigate("ManualBook", { initialBook: { isbn, library: activeLibrary } }) }
         ]);
         return;
       }
@@ -56,17 +58,17 @@ export function ScannerScreen({ navigation }: Props) {
       navigation.navigate("BookConfirm", { book: { ...book, library: activeLibrary } });
     } catch (err) {
       Alert.alert(
-        "Errore",
-        err instanceof Error ? err.message : "Impossibile recuperare i dati del libro. Verifica la connessione internet.",
+        t("error"),
+        err instanceof Error ? err.message : t("localDatabaseError"),
         [
-          { text: "Riprova", onPress: () => setLocked(false) },
+          { text: t("retry"), onPress: () => setLocked(false) },
           {
-            text: "Aggiungi manualmente",
+            text: t("addManually"),
             onPress: async () => navigation.navigate("ManualBook", { initialBook: { isbn, library: await getActiveLibrary() } })
           }
         ]
       );
-      setMessage("Inquadra il codice a barre EAN-13 del libro.");
+      setMessage(t("scanHint"));
     }
   }
 
@@ -83,13 +85,13 @@ export function ScannerScreen({ navigation }: Props) {
 
     return (
       <View style={styles.permission}>
-        <Text style={styles.permissionTitle}>Permesso fotocamera necessario</Text>
-        <Text style={styles.permissionText}>La fotocamera serve solo per leggere il codice ISBN/EAN-13 del libro.</Text>
+        <Text style={styles.permissionTitle}>{t("cameraPermissionTitle")}</Text>
+        <Text style={styles.permissionText}>{t("cameraPermissionBody")}</Text>
         <AppButton
-          label={canAskAgain ? "Concedi permesso" : "Apri impostazioni"}
+          label={canAskAgain ? t("grantPermission") : t("openSettings")}
           onPress={canAskAgain ? requestPermission : Linking.openSettings}
         />
-        <AppButton label="Indietro" onPress={() => navigation.goBack()} variant="secondary" />
+        <AppButton label={t("back")} onPress={() => navigation.goBack()} variant="secondary" />
       </View>
     );
   }
@@ -101,7 +103,7 @@ export function ScannerScreen({ navigation }: Props) {
         barcodeScannerSettings={{ barcodeTypes: ["ean13"] }}
         facing="back"
         onBarcodeScanned={locked ? undefined : handleBarcodeScanned}
-        onMountError={(event) => Alert.alert("Errore fotocamera", event.message)}
+        onMountError={(event) => Alert.alert(t("cameraError"), event.message)}
         style={styles.camera}
       />
       <View style={styles.overlay}>

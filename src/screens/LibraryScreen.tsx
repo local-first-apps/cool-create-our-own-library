@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
 import { EmptyState } from "../components/EmptyState";
+import { useI18n } from "../i18n";
 import { DEFAULT_LIBRARY_NAME, getBooks } from "../services/db";
 import { getActiveLibrary } from "../services/settings";
 import { Book } from "../types/Book";
@@ -16,6 +17,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "Library">;
 
 export function LibraryScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
   const [filters, setFilters] = useState<BookFilterParams>(route.params ?? {});
   const [activeLibrary, setActiveLibrary] = useState(DEFAULT_LIBRARY_NAME);
@@ -28,11 +30,11 @@ export function LibraryScreen({ navigation, route }: Props) {
       setActiveLibrary(library);
       setBooks(await getBooks(library));
     } catch (err) {
-      Alert.alert("Errore database", err instanceof Error ? err.message : "Impossibile leggere la biblioteca locale.");
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,17 +62,17 @@ export function LibraryScreen({ navigation, route }: Props) {
     <View style={styles.container}>
       <Text style={styles.title}>{activeLibrary}</Text>
       <Text style={styles.subtitle}>
-        {visibleBooks.length} di {books.length} libri
+        {visibleBooks.length} / {t("bookCount", { count: books.length })}
       </Text>
 
       {filtersActive ? (
         <View style={styles.filterBox}>
-          <Text style={styles.filterText}>Vista filtrata</Text>
-          <AppButton label="Cancella filtri" onPress={clearFilters} variant="secondary" />
+          <Text style={styles.filterText}>{t("filteredView")}</Text>
+          <AppButton label={t("clearFilters")} onPress={clearFilters} variant="secondary" />
         </View>
       ) : null}
       <View style={styles.homeAction}>
-        <AppButton label="Torna alla Home" onPress={() => navigation.goBack()} variant="secondary" />
+        <AppButton label={t("returnHome")} onPress={() => navigation.goBack()} variant="secondary" />
       </View>
 
       {loading ? (
@@ -79,7 +81,7 @@ export function LibraryScreen({ navigation, route }: Props) {
         <FlatList
           data={visibleBooks}
           keyExtractor={(item) => String(item.id)}
-          ListEmptyComponent={<EmptyState message="Nessun libro trovato." />}
+          ListEmptyComponent={<EmptyState message={t("emptyLibrary")} />}
           contentContainerStyle={[
             visibleBooks.length === 0 ? styles.emptyList : styles.list,
             { paddingBottom: Math.max(insets.bottom + 32, 72) }
@@ -87,9 +89,9 @@ export function LibraryScreen({ navigation, route }: Props) {
           renderItem={({ item }) => (
             <Pressable onPress={() => navigation.navigate("BookDetail", { id: item.id })} style={styles.bookItem}>
               <Text style={styles.bookTitle}>{item.title}</Text>
-              <Text style={styles.bookMeta}>{item.authors || "Autore non indicato"}</Text>
+              <Text style={styles.bookMeta}>{item.authors || t("authorMissing")}</Text>
               <View style={styles.bookFooter}>
-                <Text style={styles.bookSmall}>{item.publishedYear || "Anno n/d"}</Text>
+                <Text style={styles.bookSmall}>{item.publishedYear || t("yearMissing")}</Text>
                 {item.shelf ? <Text style={styles.bookSmall}>{item.shelf}</Text> : null}
               </View>
             </Pressable>

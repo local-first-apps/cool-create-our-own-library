@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "../components/AppButton";
 import { BookForm } from "../components/BookForm";
 import { InfoRow } from "../components/InfoRow";
+import { useI18n } from "../i18n";
 import { deleteBook, getBookById, updateBook } from "../services/db";
 import { Book, BookInput } from "../types/Book";
 import { RootStackParamList } from "../types/Navigation";
@@ -16,6 +17,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "BookDetail">;
 
 export function BookDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const [book, setBook] = useState<Book | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
@@ -25,19 +27,19 @@ export function BookDetailScreen({ navigation, route }: Props) {
       setLoading(true);
       const found = await getBookById(route.params.id);
       if (!found) {
-        Alert.alert("Libro non trovato", "Il libro non è più presente nella biblioteca.", [
-          { text: "OK", onPress: () => navigation.goBack() }
+        Alert.alert(t("bookNotFound"), t("bookNotAvailable"), [
+          { text: t("ok"), onPress: () => navigation.goBack() }
         ]);
         return;
       }
 
       setBook(found);
     } catch (err) {
-      Alert.alert("Errore database", err instanceof Error ? err.message : "Impossibile leggere il libro.");
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     } finally {
       setLoading(false);
     }
-  }, [navigation, route.params.id]);
+  }, [navigation, route.params.id, t]);
 
   useFocusEffect(
     useCallback(() => {
@@ -60,17 +62,17 @@ export function BookDetailScreen({ navigation, route }: Props) {
       return;
     }
 
-    Alert.alert("Eliminare il libro?", "L'operazione non può essere annullata.", [
-      { text: "Annulla", style: "cancel" },
+    Alert.alert(t("deleteBookTitle"), t("deleteBookBody"), [
+      { text: t("cancel"), style: "cancel" },
       {
-        text: "Elimina",
+        text: t("delete"),
         style: "destructive",
         onPress: async () => {
           try {
             await deleteBook(book.id);
             navigation.popToTop();
           } catch (err) {
-            Alert.alert("Errore database", err instanceof Error ? err.message : "Impossibile eliminare il libro.");
+            Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
           }
         }
       }
@@ -88,7 +90,7 @@ export function BookDetailScreen({ navigation, route }: Props) {
   if (!book) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.muted}>Libro non disponibile.</Text>
+        <Text style={styles.muted}>{t("bookNotAvailable")}</Text>
       </View>
     );
   }
@@ -97,7 +99,7 @@ export function BookDetailScreen({ navigation, route }: Props) {
     return (
       <BookForm
         initialValue={book}
-        submitLabel="Salva modifiche"
+        submitLabel={t("save")}
         onCancel={() => setEditing(false)}
         onSubmit={handleUpdate}
       />
@@ -111,21 +113,21 @@ export function BookDetailScreen({ navigation, route }: Props) {
       <View style={styles.panel}>
         <Text style={styles.title}>{book.title}</Text>
         <InfoRow label="ISBN" value={book.isbn} />
-        <InfoRow label="Autore/i" value={book.authors} />
-        <InfoRow label="Editore" value={book.publisher} />
-        <InfoRow label="Anno" value={book.publishedYear} />
-        <InfoRow label="Categoria" value={book.category} />
-        <InfoRow label="Lingua" value={book.language} />
-        <InfoRow label="Scaffale/Stanza" value={book.shelf} />
-        <InfoRow label="Note" value={book.notes} />
-        <InfoRow label="Sinossi" value={book.synopsis} />
-        <InfoRow label="Data inserimento" value={formatDateTime(book.createdAt)} />
-        <InfoRow label="Ultima modifica" value={formatDateTime(book.updatedAt)} />
+        <InfoRow label={t("authors")} value={book.authors} />
+        <InfoRow label={t("publisher")} value={book.publisher} />
+        <InfoRow label={t("publishedYear")} value={book.publishedYear} />
+        <InfoRow label={t("category")} value={book.category} />
+        <InfoRow label={t("language")} value={book.language} />
+        <InfoRow label={t("shelf")} value={book.shelf} />
+        <InfoRow label={t("notes")} value={book.notes} />
+        <InfoRow label={t("synopsis")} value={book.synopsis} />
+        <InfoRow label={t("exportField_createdAt")} value={formatDateTime(book.createdAt)} />
+        <InfoRow label={t("exportField_updatedAt")} value={formatDateTime(book.updatedAt)} />
       </View>
 
       <View style={styles.actions}>
-        <AppButton label="Modifica" onPress={() => setEditing(true)} />
-        <AppButton label="Elimina" onPress={handleDelete} variant="danger" />
+        <AppButton label={t("edit")} onPress={() => setEditing(true)} />
+        <AppButton label={t("delete")} onPress={handleDelete} variant="danger" />
       </View>
     </ScrollView>
   );

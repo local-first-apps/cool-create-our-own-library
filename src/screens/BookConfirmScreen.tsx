@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton } from "../components/AppButton";
 import { BookForm } from "../components/BookForm";
 import { InfoRow } from "../components/InfoRow";
+import { useI18n } from "../i18n";
 import { DEFAULT_LIBRARY_NAME, getLocations, saveBook } from "../services/db";
 import { getActiveLibrary } from "../services/settings";
 import { BookInput } from "../types/Book";
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<RootStackParamList, "BookConfirm">;
 
 export function BookConfirmScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const [book, setBook] = useState<BookInput>(route.params.book);
   const [library, setLibrary] = useState(book.library ?? DEFAULT_LIBRARY_NAME);
   const [shelf, setShelf] = useState(book.shelf ?? "");
@@ -42,17 +44,17 @@ export function BookConfirmScreen({ navigation, route }: Props) {
       setSaving(true);
       const result = await saveBook({ ...book, library, shelf, notes });
       if (result.duplicate) {
-        Alert.alert("Duplicato", "Questo libro e' gia' presente nella biblioteca.", [
-          { text: "Torna all'elenco", onPress: () => navigation.popToTop() }
+        Alert.alert(t("duplicate"), t("duplicateBody"), [
+          { text: t("returnList"), onPress: () => navigation.popToTop() }
         ]);
         return;
       }
 
-      Alert.alert("Libro salvato", "Il libro e' stato aggiunto alla biblioteca.", [
-        { text: "OK", onPress: () => navigation.popToTop() }
+      Alert.alert(t("bookSaved"), t("bookAdded"), [
+        { text: t("ok"), onPress: () => navigation.popToTop() }
       ]);
     } catch (err) {
-      Alert.alert("Errore database", err instanceof Error ? err.message : "Impossibile salvare il libro.");
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     } finally {
       setSaving(false);
     }
@@ -69,7 +71,7 @@ export function BookConfirmScreen({ navigation, route }: Props) {
     return (
       <BookForm
         initialValue={{ ...book, library, shelf, notes }}
-        submitLabel="Aggiorna dati"
+        submitLabel={t("updateData")}
         onCancel={() => setEditingData(false)}
         onSubmit={handleUpdateData}
       />
@@ -83,21 +85,21 @@ export function BookConfirmScreen({ navigation, route }: Props) {
       <View style={styles.panel}>
         <Text style={styles.title}>{book.title}</Text>
         <InfoRow label="ISBN" value={book.isbn} />
-        <InfoRow label="Autore/i" value={book.authors} />
-        <InfoRow label="Editore" value={book.publisher} />
-        <InfoRow label="Anno" value={book.publishedYear} />
-        <InfoRow label="Categoria" value={book.category} />
-        <InfoRow label="Lingua" value={book.language} />
-        <InfoRow label="Sinossi" value={book.synopsis} />
+        <InfoRow label={t("authors")} value={book.authors} />
+        <InfoRow label={t("publisher")} value={book.publisher} />
+        <InfoRow label={t("publishedYear")} value={book.publishedYear} />
+        <InfoRow label={t("category")} value={book.category} />
+        <InfoRow label={t("language")} value={book.language} />
+        <InfoRow label={t("synopsis")} value={book.synopsis} />
       </View>
 
-      <AppButton label="Modifica dati" onPress={() => setEditingData(true)} variant="secondary" />
+      <AppButton label={t("editData")} onPress={() => setEditingData(true)} variant="secondary" />
 
       <View style={styles.field}>
-        <Text style={styles.label}>Scaffale/Stanza</Text>
+        <Text style={styles.label}>{t("shelf")}</Text>
         <TextInput
           onChangeText={setShelf}
-          placeholder="Es. Salotto, studio, scaffale A"
+          placeholder={t("shelfPlaceholder")}
           placeholderTextColor="#8a94a6"
           style={styles.input}
           value={shelf}
@@ -114,11 +116,11 @@ export function BookConfirmScreen({ navigation, route }: Props) {
       </View>
 
       <View style={styles.field}>
-        <Text style={styles.label}>Note</Text>
+        <Text style={styles.label}>{t("notes")}</Text>
         <TextInput
           multiline
           onChangeText={setNotes}
-          placeholder="Note personali"
+          placeholder={t("notes")}
           placeholderTextColor="#8a94a6"
           style={[styles.input, styles.notes]}
           value={notes}
@@ -126,8 +128,8 @@ export function BookConfirmScreen({ navigation, route }: Props) {
       </View>
 
       <View style={styles.actions}>
-        <AppButton label="Salva libro" onPress={handleSave} disabled={saving} />
-        <AppButton label="Annulla" onPress={() => navigation.popToTop()} variant="secondary" disabled={saving} />
+        <AppButton label={t("saveBook")} onPress={handleSave} disabled={saving} />
+        <AppButton label={t("cancel")} onPress={() => navigation.popToTop()} variant="secondary" disabled={saving} />
       </View>
     </ScrollView>
   );

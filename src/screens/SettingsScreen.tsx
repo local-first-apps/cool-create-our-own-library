@@ -5,6 +5,7 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
+import { useI18n } from "../i18n";
 import { renameLibrary } from "../services/db";
 import {
   DEFAULT_LANGUAGE,
@@ -22,6 +23,7 @@ type LegalModal = "terms" | "privacy" | null;
 
 export function SettingsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
+  const { setAppLanguage, t } = useI18n();
   const [deviceName, setDeviceName] = useState("");
   const [libraryName, setLibraryName] = useState("");
   const [currentLibraryName, setCurrentLibraryName] = useState("");
@@ -54,11 +56,12 @@ export function SettingsScreen({ navigation }: Props) {
       await saveActiveLibrary(renamedLibrary);
       await saveDeviceName(deviceName);
       await saveLanguage(language);
-      Alert.alert("Impostazioni salvate", "Biblioteca, dispositivo e lingua sono stati aggiornati.", [
-        { text: "OK", onPress: () => navigation.goBack() }
+      setAppLanguage(language);
+      Alert.alert(t("settingsSaved"), t("settingsSavedBody"), [
+        { text: t("ok"), onPress: () => navigation.goBack() }
       ]);
     } catch (err) {
-      Alert.alert("Errore", err instanceof Error ? err.message : "Impossibile salvare le impostazioni.");
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     } finally {
       setSaving(false);
     }
@@ -71,12 +74,12 @@ export function SettingsScreen({ navigation }: Props) {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.field}>
-          <Text style={styles.label}>Nome biblioteca</Text>
-          <Text style={styles.description}>Nome locale della biblioteca usata su questo telefono.</Text>
+          <Text style={styles.label}>{t("libraryName")}</Text>
+          <Text style={styles.description}>{t("libraryNameDescription")}</Text>
           <TextInput
             autoCapitalize="sentences"
             onChangeText={setLibraryName}
-            placeholder="Es. Biblioteca di casa"
+            placeholder={t("librarySetupPlaceholder")}
             placeholderTextColor="#8a94a6"
             style={styles.input}
             value={libraryName}
@@ -84,8 +87,8 @@ export function SettingsScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Nome dispositivo</Text>
-          <Text style={styles.description}>Questo nome viene salvato solo sul telefono.</Text>
+          <Text style={styles.label}>{t("deviceNameField")}</Text>
+          <Text style={styles.description}>{t("deviceNameDescription")}</Text>
           <TextInput
             autoCapitalize="sentences"
             onChangeText={setDeviceName}
@@ -97,7 +100,7 @@ export function SettingsScreen({ navigation }: Props) {
         </View>
 
         <View style={styles.field}>
-          <Text style={styles.label}>Lingua</Text>
+          <Text style={styles.label}>{t("language")}</Text>
           <View style={styles.languageRow}>
             {SUPPORTED_LANGUAGES.map((item) => (
               <Pressable
@@ -114,23 +117,31 @@ export function SettingsScreen({ navigation }: Props) {
 
         <View style={styles.actions}>
           <View style={styles.actionButton}>
-            <AppButton label="Salva" onPress={handleSave} disabled={saving} />
+            <AppButton label={t("save")} onPress={handleSave} disabled={saving} />
           </View>
           <View style={styles.actionButton}>
-            <AppButton label="Annulla" onPress={() => navigation.goBack()} variant="secondary" disabled={saving} />
+            <AppButton label={t("cancel")} onPress={() => navigation.goBack()} variant="secondary" disabled={saving} />
           </View>
         </View>
 
+        <View style={styles.feedbackAction}>
+          <AppButton
+            label={t("feedback")}
+            onPress={() => Alert.alert(t("feedbackTitle"), t("feedbackBody"))}
+            variant="secondary"
+          />
+        </View>
+
         <View style={styles.legalActions}>
-          <LegalLinkButton label="Termini di servizio" onPress={() => setLegalModal("terms")} />
-          <LegalLinkButton label="Privacy" onPress={() => setLegalModal("privacy")} />
+          <LegalLinkButton label={t("terms")} onPress={() => setLegalModal("terms")} />
+          <LegalLinkButton label={t("privacy")} onPress={() => setLegalModal("privacy")} />
         </View>
       </ScrollView>
 
       <Modal animationType="slide" onRequestClose={() => setLegalModal(null)} transparent visible={Boolean(legalModal)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>{legalModal === "privacy" ? "Privacy" : "Termini di servizio"}</Text>
+            <Text style={styles.modalTitle}>{legalModal === "privacy" ? t("privacy") : t("terms")}</Text>
             <ScrollView style={styles.legalTextBox}>
               {(legalModal === "privacy" ? PRIVACY_TEXT : TERMS_TEXT).map((paragraph) => (
                 <Text key={paragraph} style={styles.legalText}>
@@ -139,7 +150,7 @@ export function SettingsScreen({ navigation }: Props) {
               ))}
             </ScrollView>
             <View style={styles.modalActions}>
-              <AppButton label="Chiudi" onPress={() => setLegalModal(null)} />
+              <AppButton label={t("close")} onPress={() => setLegalModal(null)} />
             </View>
           </View>
         </View>
@@ -203,6 +214,9 @@ const styles = StyleSheet.create({
   },
   field: {
     marginBottom: 18
+  },
+  feedbackAction: {
+    marginTop: 22
   },
   input: {
     backgroundColor: "#ffffff",

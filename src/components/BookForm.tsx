@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { useI18n } from "../i18n";
 import { DEFAULT_LIBRARY_NAME, getLocations } from "../services/db";
 import { BookInput } from "../types/Book";
 import { BOOK_LANGUAGE_OPTIONS, normalizeBookLanguage } from "../utils/bookLanguage";
@@ -22,24 +23,26 @@ type FieldName = keyof Pick<
 const FIELDS: Array<{
   key: FieldName;
   label: string;
+  labelKey?: "authors" | "category" | "language" | "notes" | "publishedYear" | "publisher" | "shelf" | "synopsis" | "title";
   required?: boolean;
   multiline?: boolean;
   keyboardType?: "default" | "number-pad";
 }> = [
   { key: "isbn", label: "ISBN" },
-  { key: "title", label: "Titolo", required: true },
-  { key: "authors", label: "Autore/i" },
-  { key: "publisher", label: "Editore" },
-  { key: "publishedYear", label: "Anno", keyboardType: "number-pad" },
-  { key: "category", label: "Categoria" },
-  { key: "language", label: "Lingua" },
-  { key: "shelf", label: "Scaffale/Stanza" },
-  { key: "notes", label: "Note", multiline: true },
-  { key: "synopsis", label: "Sinossi", multiline: true }
+  { key: "title", label: "Titolo", labelKey: "title", required: true },
+  { key: "authors", label: "Autore/i", labelKey: "authors" },
+  { key: "publisher", label: "Editore", labelKey: "publisher" },
+  { key: "publishedYear", label: "Anno", labelKey: "publishedYear", keyboardType: "number-pad" },
+  { key: "category", label: "Categoria", labelKey: "category" },
+  { key: "language", label: "Lingua", labelKey: "language" },
+  { key: "shelf", label: "Scaffale/Stanza", labelKey: "shelf" },
+  { key: "notes", label: "Note", labelKey: "notes", multiline: true },
+  { key: "synopsis", label: "Sinossi", labelKey: "synopsis", multiline: true }
 ];
 
 export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: BookFormProps) {
   const insets = useSafeAreaInsets();
+  const { t } = useI18n();
   const [value, setValue] = useState<BookInput>({
     isbn: initialValue?.isbn ?? "",
     title: initialValue?.title ?? "",
@@ -66,7 +69,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
 
   async function handleSubmit() {
     if (!value.title.trim()) {
-      setError("Il campo Titolo è obbligatorio.");
+      setError(`${t("title")} *`);
       return;
     }
 
@@ -75,7 +78,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
     try {
       await onSubmit(value);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore durante il salvataggio.");
+      setError(err instanceof Error ? err.message : t("error"));
     } finally {
       setSaving(false);
     }
@@ -90,7 +93,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
         {FIELDS.map((field) => (
           <View key={field.key} style={styles.field}>
             <Text style={styles.label}>
-              {field.label}
+              {field.labelKey ? t(field.labelKey) : field.label}
               {field.required ? " *" : ""}
             </Text>
             {field.key === "language" ? (
@@ -119,7 +122,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
                 keyboardType={field.keyboardType ?? "default"}
                 multiline={field.multiline}
                 onChangeText={(text) => setValue((current) => ({ ...current, [field.key]: text }))}
-                placeholder={field.label}
+                placeholder={field.labelKey ? t(field.labelKey) : field.label}
                 placeholderTextColor="#8a94a6"
                 style={[styles.input, field.multiline && styles.multiline]}
                 value={(value[field.key] ?? "") as string}
@@ -145,7 +148,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
 
         <View style={styles.actions}>
           <AppButton label={submitLabel} onPress={handleSubmit} disabled={saving} />
-          <AppButton label="Annulla" onPress={onCancel} variant="secondary" disabled={saving} />
+          <AppButton label={t("cancel")} onPress={onCancel} variant="secondary" disabled={saving} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
