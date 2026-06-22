@@ -42,6 +42,11 @@
           "barcodeScannerEnabled": true
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "31a138ac-d50e-4f9e-a7d1-c7d9ce08f376"
+      }
+    }
   }
 }
