@@ -292,24 +292,36 @@ export function HomeScreen({ navigation }: Props) {
             <FilterPickerButton count={selectedLocations.length} label="Posizioni" onPress={() => setMultiFilter("locations")} />
           </View>
 
-          {years.length > 0 ? (
-            <>
-              <Text style={styles.filterLabel}>Anni</Text>
-              <View style={styles.yearRangeRow}>
-                <Pressable onPress={() => setYearPickerTarget("from")} style={styles.rangeButton}>
-                  <Text style={styles.rangeButtonText}>Dal: {yearFrom ?? "-"}</Text>
-                </Pressable>
-                <Pressable onPress={() => setYearPickerTarget("to")} style={styles.rangeButton}>
-                  <Text style={styles.rangeButtonText}>Al: {yearTo ?? "-"}</Text>
-                </Pressable>
-                <Pressable onPress={() => setYearSelectionVisible(true)} style={styles.rangeButtonWide}>
-                  <Text style={styles.rangeButtonText}>
-                    {selectedYears.length > 0 ? `Anni (${selectedYears.length})` : "Seleziona"}
-                  </Text>
-                </Pressable>
-              </View>
-            </>
-          ) : null}
+          <Text style={styles.filterLabel}>Anni</Text>
+          <View style={styles.yearRangeRow}>
+            <Pressable
+              disabled={years.length === 0}
+              onPress={() => setYearPickerTarget("from")}
+              style={[styles.rangeButton, years.length === 0 && styles.rangeButtonDisabled]}
+            >
+              <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
+                Dal: {yearFrom ?? "-"}
+              </Text>
+            </Pressable>
+            <Pressable
+              disabled={years.length === 0}
+              onPress={() => setYearPickerTarget("to")}
+              style={[styles.rangeButton, years.length === 0 && styles.rangeButtonDisabled]}
+            >
+              <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
+                Al: {yearTo ?? "-"}
+              </Text>
+            </Pressable>
+            <Pressable
+              disabled={years.length === 0}
+              onPress={() => setYearSelectionVisible(true)}
+              style={[styles.rangeButtonWide, years.length === 0 && styles.rangeButtonDisabled]}
+            >
+              <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
+                {selectedYears.length > 0 ? `Anni (${selectedYears.length})` : "Seleziona"}
+              </Text>
+            </Pressable>
+          </View>
         </View>
 
         {loading ? <ActivityIndicator style={styles.loader} /> : null}
@@ -877,6 +889,12 @@ const styles = StyleSheet.create({
     color: "#334155",
     fontSize: 13,
     fontWeight: "800"
+  },
+  rangeButtonDisabled: {
+    opacity: 0.55
+  },
+  rangeButtonTextDisabled: {
+    color: "#64748b"
   },
   searchRow: {
     flexDirection: "row",
