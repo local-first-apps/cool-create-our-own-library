@@ -84,10 +84,12 @@ export function BookConfirmScreen({ navigation, route }: Props) {
 
       <View style={styles.panel}>
         <Text style={styles.title}>{book.title}</Text>
+        {book.subtitle ? <Text style={styles.bookSubtitle}>{book.subtitle}</Text> : null}
         <InfoRow label="ISBN" value={book.isbn} />
         <InfoRow label={t("authors")} value={book.authors} />
         <InfoRow label={t("publisher")} value={book.publisher} />
         <InfoRow label={t("publishedYear")} value={book.publishedYear} />
+        <InfoRow label={t("pageCount")} value={book.pageCount} />
         <InfoRow label={t("category")} value={book.category} />
         <InfoRow label={t("language")} value={book.language} />
         <InfoRow label={t("synopsis")} value={book.synopsis} />
@@ -150,6 +152,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     height: 220,
     width: 150
+  },
+  bookSubtitle: {
+    color: "#475569",
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+    marginTop: -2
   },
   field: {
     gap: 6

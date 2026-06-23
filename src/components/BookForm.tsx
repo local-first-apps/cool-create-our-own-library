@@ -17,22 +17,46 @@ type BookFormProps = {
 
 type FieldName = keyof Pick<
   BookInput,
-  "isbn" | "title" | "authors" | "publisher" | "publishedYear" | "category" | "language" | "shelf" | "notes" | "synopsis"
+  | "isbn"
+  | "title"
+  | "subtitle"
+  | "authors"
+  | "publisher"
+  | "publishedYear"
+  | "pageCount"
+  | "category"
+  | "language"
+  | "shelf"
+  | "notes"
+  | "synopsis"
 >;
 
 const FIELDS: Array<{
   key: FieldName;
   label: string;
-  labelKey?: "authors" | "category" | "language" | "notes" | "publishedYear" | "publisher" | "shelf" | "synopsis" | "title";
+  labelKey?:
+    | "authors"
+    | "category"
+    | "language"
+    | "notes"
+    | "pageCount"
+    | "publishedYear"
+    | "publisher"
+    | "shelf"
+    | "subtitle"
+    | "synopsis"
+    | "title";
   required?: boolean;
   multiline?: boolean;
   keyboardType?: "default" | "number-pad";
 }> = [
   { key: "isbn", label: "ISBN" },
   { key: "title", label: "Titolo", labelKey: "title", required: true },
+  { key: "subtitle", label: "Sottotitolo", labelKey: "subtitle" },
   { key: "authors", label: "Autore/i", labelKey: "authors" },
   { key: "publisher", label: "Editore", labelKey: "publisher" },
   { key: "publishedYear", label: "Anno", labelKey: "publishedYear", keyboardType: "number-pad" },
+  { key: "pageCount", label: "Numero pagine", labelKey: "pageCount", keyboardType: "number-pad" },
   { key: "category", label: "Categoria", labelKey: "category" },
   { key: "language", label: "Lingua", labelKey: "language" },
   { key: "shelf", label: "Scaffale/Stanza", labelKey: "shelf" },
@@ -46,9 +70,11 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
   const [value, setValue] = useState<BookInput>({
     isbn: initialValue?.isbn ?? "",
     title: initialValue?.title ?? "",
+    subtitle: initialValue?.subtitle ?? "",
     authors: initialValue?.authors ?? "",
     publisher: initialValue?.publisher ?? "",
     publishedYear: initialValue?.publishedYear ?? "",
+    pageCount: initialValue?.pageCount ?? "",
     category: initialValue?.category ?? "",
     language: normalizeBookLanguage(initialValue?.language) ?? "",
     library: initialValue?.library ?? DEFAULT_LIBRARY_NAME,

@@ -56,9 +56,11 @@ export async function initDatabase(): Promise<void> {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       isbn TEXT,
       title TEXT NOT NULL,
+      subtitle TEXT,
       authors TEXT,
       publisher TEXT,
       publishedYear TEXT,
+      pageCount TEXT,
       category TEXT,
       language TEXT,
       library TEXT,
@@ -88,6 +90,8 @@ export async function initDatabase(): Promise<void> {
   await ensureColumn(db, "books", "library", "TEXT");
   await ensureColumn(db, "books", "synopsis", "TEXT");
   await ensureColumn(db, "books", "language", "TEXT");
+  await ensureColumn(db, "books", "subtitle", "TEXT");
+  await ensureColumn(db, "books", "pageCount", "TEXT");
   await db.execAsync(`
     UPDATE books SET language = 'IT' WHERE LOWER(language) IN ('it', 'ita', 'italiano', 'italian');
     UPDATE books SET language = 'EN' WHERE LOWER(language) IN ('en', 'eng', 'inglese', 'english');
@@ -203,14 +207,16 @@ export async function saveBook(input: BookInput): Promise<SaveBookResult> {
   try {
     result = await db.runAsync(
       `INSERT INTO books (
-        isbn, title, authors, publisher, publishedYear, category, language, library, shelf, notes,
+        isbn, title, subtitle, authors, publisher, publishedYear, pageCount, category, language, library, shelf, notes,
         synopsis, thumbnail, createdAt, updatedAt
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       isbn,
       title,
+      cleanOptionalText(input.subtitle),
       cleanOptionalText(input.authors),
       cleanOptionalText(input.publisher),
       cleanOptionalText(input.publishedYear),
+      cleanOptionalText(input.pageCount),
       cleanOptionalText(input.category),
       normalizeBookLanguage(input.language),
       library,
@@ -261,9 +267,11 @@ export async function updateBook(id: number, input: BookInput): Promise<Book> {
     `UPDATE books SET
       isbn = ?,
       title = ?,
+      subtitle = ?,
       authors = ?,
       publisher = ?,
       publishedYear = ?,
+      pageCount = ?,
       category = ?,
       language = ?,
       library = ?,
@@ -275,9 +283,11 @@ export async function updateBook(id: number, input: BookInput): Promise<Book> {
      WHERE id = ?`,
     isbn,
     title,
+    cleanOptionalText(input.subtitle),
     cleanOptionalText(input.authors),
     cleanOptionalText(input.publisher),
     cleanOptionalText(input.publishedYear),
+    cleanOptionalText(input.pageCount),
     cleanOptionalText(input.category),
     normalizeBookLanguage(input.language),
     cleanOptionalText(input.library) ?? DEFAULT_LIBRARY_NAME,

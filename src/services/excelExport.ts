@@ -16,9 +16,11 @@ export type ExportFieldKey =
   | "id"
   | "isbn"
   | "title"
+  | "subtitle"
   | "authors"
   | "publisher"
   | "publishedYear"
+  | "pageCount"
   | "category"
   | "language"
   | "shelf"
@@ -46,9 +48,11 @@ export const EXPORT_FIELDS: ExportField[] = [
   { key: "id", label: "ID locale", width: 10, value: (book) => book.id },
   { key: "isbn", label: "ISBN", width: 18, value: (book) => book.isbn ?? "" },
   { key: "title", label: "Titolo", width: 36, value: (book) => book.title },
+  { key: "subtitle", label: "Sottotitolo", width: 32, value: (book) => book.subtitle ?? "" },
   { key: "authors", label: "Autori", width: 28, value: (book) => (book.authors ? formatAuthorLabel(book.authors) : "") },
   { key: "publisher", label: "Editore", width: 24, value: (book) => book.publisher ?? "" },
   { key: "publishedYear", label: "Anno", width: 8, value: (book) => book.publishedYear ?? "" },
+  { key: "pageCount", label: "Numero pagine", width: 12, value: (book) => book.pageCount ?? "" },
   { key: "category", label: "Categoria", width: 20, value: (book) => book.category ?? "" },
   { key: "language", label: "Lingua", width: 10, value: (book) => book.language ?? "" },
   { key: "shelf", label: "Scaffale/Stanza", width: 18, value: (book) => book.shelf ?? "" },
@@ -96,9 +100,11 @@ function columnRule(field: ExportField): ColumnRule {
     isbn: { max: 11, min: 7, weight: 0.7 },
     language: { max: 5, min: 3, weight: 0.45 },
     notes: { max: 24, min: 8, weight: 1.7 },
+    pageCount: { max: 7, min: 4, weight: 0.55 },
     publishedYear: { max: 6, min: 4, weight: 0.5 },
     publisher: { max: 16, min: 7, weight: 1 },
     shelf: { max: 13, min: 6, weight: 0.9 },
+    subtitle: { max: 20, min: 8, weight: 1.25 },
     synopsis: { max: 28, min: 9, weight: 1.9 },
     title: { max: 22, min: 10, weight: 1.5 },
     updatedAt: { max: 10, min: 6, weight: 0.8 }
@@ -174,7 +180,7 @@ function compareExportValues(field: ExportField, a: Book, b: Book, deviceName: s
     return -1;
   }
 
-  if (field.key === "id" || field.key === "isbn" || field.key === "publishedYear") {
+  if (field.key === "id" || field.key === "isbn" || field.key === "publishedYear" || field.key === "pageCount") {
     return compareNumericText(left, right);
   }
 

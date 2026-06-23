@@ -89,10 +89,10 @@ export function LibraryScreen({ navigation, route }: Props) {
           renderItem={({ item }) => (
             <Pressable onPress={() => navigation.navigate("BookDetail", { id: item.id })} style={styles.bookItem}>
               <Text style={styles.bookTitle}>{item.title}</Text>
+              {item.subtitle ? <Text style={styles.bookSubtitle}>{item.subtitle}</Text> : null}
               <Text style={styles.bookMeta}>{item.authors || t("authorMissing")}</Text>
               <View style={styles.bookFooter}>
                 <Text style={styles.bookSmall}>{item.publishedYear || t("yearMissing")}</Text>
-                {item.shelf ? <Text style={styles.bookSmall}>{item.shelf}</Text> : null}
               </View>
             </Pressable>
           )}
@@ -124,6 +124,12 @@ const styles = StyleSheet.create({
   bookSmall: {
     color: "#64748b",
     fontSize: 13
+  },
+  bookSubtitle: {
+    color: "#475569",
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 3
   },
   bookTitle: {
     color: "#111827",

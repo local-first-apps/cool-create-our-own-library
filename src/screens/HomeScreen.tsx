@@ -15,7 +15,7 @@ import {
   ExportFormat
 } from "../services/excelExport";
 import { DEFAULT_LIBRARY_NAME, getBooks, renameLibrary } from "../services/db";
-import { getSettings, getStoredActiveLibrary, saveActiveLibrary } from "../services/settings";
+import { SUPPORTED_LANGUAGES, getSettings, getStoredActiveLibrary, saveActiveLibrary, saveLanguage } from "../services/settings";
 import { Book } from "../types/Book";
 import { RootStackParamList } from "../types/Navigation";
 import { compareAuthorsByLabel, formatAuthorLabel } from "../utils/authors";
@@ -25,13 +25,15 @@ type Props = NativeStackScreenProps<RootStackParamList, "Home">;
 type YearPickerTarget = "from" | "to";
 type MultiFilterKey = "authors" | "categories" | "languages" | "locations";
 type ExportScope = "filtered" | "all";
+type SetupStep = "language" | "library";
 
 export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
-  const { t } = useI18n();
+  const { setAppLanguage, t } = useI18n();
   const [books, setBooks] = useState<Book[]>([]);
   const [activeLibrary, setActiveLibrary] = useState(DEFAULT_LIBRARY_NAME);
   const [setupLibraryInput, setSetupLibraryInput] = useState(DEFAULT_LIBRARY_NAME);
+  const [setupStep, setSetupStep] = useState<SetupStep>("language");
   const [setupVisible, setSetupVisible] = useState(false);
   const [multiFilter, setMultiFilter] = useState<MultiFilterKey | null>(null);
   const [yearPickerTarget, setYearPickerTarget] = useState<YearPickerTarget | null>(null);
@@ -63,6 +65,9 @@ export function HomeScreen({ navigation }: Props) {
       setBooks(await getBooks(library));
       setActiveLibrary(library);
       setSetupLibraryInput(library);
+      if (!storedLibrary) {
+        setSetupStep("language");
+      }
       setSetupVisible(!storedLibrary);
       setDeviceName(settings.deviceName);
     } catch (err) {
@@ -155,6 +160,16 @@ export function HomeScreen({ navigation }: Props) {
       setActiveLibrary(library);
       setSetupVisible(false);
       setBooks(await getBooks(library));
+    } catch (err) {
+      Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
+    }
+  }
+
+  async function saveInitialLanguage(language: string) {
+    try {
+      await saveLanguage(language);
+      setAppLanguage(language);
+      setSetupStep("library");
     } catch (err) {
       Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     }
@@ -477,19 +492,39 @@ export function HomeScreen({ navigation }: Props) {
       <Modal animationType="fade" onRequestClose={() => undefined} transparent visible={setupVisible}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>{t("libraryName")}</Text>
-            <Text style={styles.setupText}>{t("librarySetupBody")}</Text>
-            <TextInput
-              autoCapitalize="sentences"
-              onChangeText={setSetupLibraryInput}
-              placeholder={t("librarySetupPlaceholder")}
-              placeholderTextColor="#8a94a6"
-              style={styles.inputFull}
-              value={setupLibraryInput}
-            />
-            <View style={styles.modalActions}>
-              <AppButton label={t("save")} onPress={saveInitialLibrary} />
-            </View>
+            {setupStep === "language" ? (
+              <>
+                <Text style={styles.modalTitle}>{t("language")}</Text>
+                <View style={styles.setupLanguageGrid}>
+                  {SUPPORTED_LANGUAGES.map((language) => (
+                    <Pressable
+                      key={language}
+                      accessibilityRole="button"
+                      onPress={() => void saveInitialLanguage(language)}
+                      style={styles.setupLanguageButton}
+                    >
+                      <Text style={styles.setupLanguageText}>{language}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.modalTitle}>{t("libraryName")}</Text>
+                <Text style={styles.setupText}>{t("librarySetupBody")}</Text>
+                <TextInput
+                  autoCapitalize="sentences"
+                  onChangeText={setSetupLibraryInput}
+                  placeholder={t("librarySetupPlaceholder")}
+                  placeholderTextColor="#8a94a6"
+                  style={styles.inputFull}
+                  value={setupLibraryInput}
+                />
+                <View style={styles.modalActions}>
+                  <AppButton label={t("save")} onPress={saveInitialLibrary} />
+                </View>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -922,6 +957,27 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     marginBottom: 14
+  },
+  setupLanguageButton: {
+    alignItems: "center",
+    backgroundColor: "#2563EB",
+    borderRadius: 8,
+    flexBasis: "30%",
+    flexGrow: 1,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: 10
+  },
+  setupLanguageGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 8
+  },
+  setupLanguageText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "900"
   },
   subtitle: {
     color: "#2563EB",

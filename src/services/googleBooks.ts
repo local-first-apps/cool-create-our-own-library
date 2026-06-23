@@ -4,28 +4,32 @@ import { isLikelyIsbn13, normalizeIsbn } from "../utils/isbn";
 
 type GoogleBooksResponse = {
   totalItems?: number;
-  items?: Array<{
-    volumeInfo?: {
-      title?: string;
-      authors?: string[];
-      publisher?: string;
-      publishedDate?: string;
-      description?: string;
-      language?: string;
-      categories?: string[];
-      imageLinks?: {
-        thumbnail?: string;
-        smallThumbnail?: string;
-      };
-      industryIdentifiers?: Array<{
-        type?: string;
-        identifier?: string;
-      }>;
+  items?: GoogleBooksItem[];
+};
+
+type GoogleBooksItem = {
+  volumeInfo?: {
+    title?: string;
+    subtitle?: string;
+    authors?: string[];
+    publisher?: string;
+    publishedDate?: string;
+    description?: string;
+    language?: string;
+    pageCount?: number;
+    categories?: string[];
+    imageLinks?: {
+      thumbnail?: string;
+      smallThumbnail?: string;
     };
-    searchInfo?: {
-      textSnippet?: string;
-    };
-  }>;
+    industryIdentifiers?: Array<{
+      type?: string;
+      identifier?: string;
+    }>;
+  };
+  searchInfo?: {
+    textSnippet?: string;
+  };
 };
 
 function cleanGoogleText(value?: string): string | null {
@@ -38,6 +42,44 @@ function cleanGoogleText(value?: string): string | null {
     .trim();
 
   return text || null;
+}
+
+function itemIdentifiers(item: GoogleBooksItem): string[] {
+  return (
+    item.volumeInfo?.industryIdentifiers
+      ?.map((identifier) => normalizeIsbn(identifier.identifier))
+      .filter((identifier): identifier is string => Boolean(identifier)) ?? []
+  );
+}
+
+function scoreGoogleBooksItem(item: GoogleBooksItem, requestedIsbn: string): number {
+  const info = item.volumeInfo;
+  if (!info) {
+    return -1;
+  }
+
+  let score = itemIdentifiers(item).includes(requestedIsbn) ? 100 : 0;
+  score += info.title ? 10 : 0;
+  score += info.subtitle ? 3 : 0;
+  score += info.authors?.length ? 8 : 0;
+  score += info.publisher ? 7 : 0;
+  score += info.publishedDate ? 5 : 0;
+  score += info.description ? 9 : item.searchInfo?.textSnippet ? 4 : 0;
+  score += info.pageCount ? 4 : 0;
+  score += info.categories?.length ? 3 : 0;
+  score += info.language ? 2 : 0;
+  score += info.imageLinks?.thumbnail || info.imageLinks?.smallThumbnail ? 2 : 0;
+  return score;
+}
+
+function selectBestGoogleBooksItem(items: GoogleBooksItem[] | undefined, requestedIsbn: string): GoogleBooksItem | null {
+  if (!items?.length) {
+    return null;
+  }
+
+  return [...items]
+    .filter((item) => Boolean(item.volumeInfo))
+    .sort((left, right) => scoreGoogleBooksItem(right, requestedIsbn) - scoreGoogleBooksItem(left, requestedIsbn))[0] ?? null;
 }
 
 function buildGoogleBooksUrl(isbn: string): string {
@@ -80,7 +122,7 @@ export async function fetchBookByIsbn(rawIsbn: string): Promise<BookInput | null
     throw new Error("Risposta non valida da Google Books.");
   }
 
-  const firstItem = data.items?.[0];
+  const firstItem = selectBestGoogleBooksItem(data.items, isbn);
   const first = firstItem?.volumeInfo;
 
   if (!first || !data.totalItems || !data.items?.length) {
@@ -97,9 +139,11 @@ export async function fetchBookByIsbn(rawIsbn: string): Promise<BookInput | null
   return {
     isbn: normalizeIsbn(identifier),
     title: first.title?.trim() || "Titolo non disponibile",
+    subtitle: cleanGoogleText(first.subtitle),
     authors: first.authors?.join(", ") ?? null,
-    publisher: first.publisher ?? null,
+    publisher: cleanGoogleText(first.publisher),
     publishedYear: first.publishedDate?.slice(0, 4) ?? null,
+    pageCount: first.pageCount ? String(first.pageCount) : null,
     category: first.categories?.[0] ?? null,
     language: normalizeBookLanguage(first.language),
     shelf: null,

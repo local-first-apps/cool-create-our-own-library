@@ -19,10 +19,12 @@ export function matchesSearch(book: Book, query?: string): boolean {
 
   return [
     book.title,
+    book.subtitle,
     book.authors,
     book.isbn,
     book.publisher,
     book.publishedYear,
+    book.pageCount,
     book.category,
     book.language,
     book.shelf,

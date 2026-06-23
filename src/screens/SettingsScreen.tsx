@@ -28,6 +28,7 @@ export function SettingsScreen({ navigation }: Props) {
   const [libraryName, setLibraryName] = useState("");
   const [currentLibraryName, setCurrentLibraryName] = useState("");
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
+  const [savedLanguage, setSavedLanguage] = useState(DEFAULT_LANGUAGE);
   const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const [saving, setSaving] = useState(false);
 
@@ -37,12 +38,14 @@ export function SettingsScreen({ navigation }: Props) {
         .then(([settings, activeLibrary]) => {
           setDeviceName(settings.deviceName);
           setLanguage(settings.language);
+          setSavedLanguage(settings.language);
           setLibraryName(activeLibrary);
           setCurrentLibraryName(activeLibrary);
         })
         .catch(() => {
           setDeviceName("Dispositivo non specificato");
           setLanguage(DEFAULT_LANGUAGE);
+          setSavedLanguage(DEFAULT_LANGUAGE);
           setLibraryName("Biblioteca principale");
           setCurrentLibraryName("Biblioteca principale");
         });
@@ -57,6 +60,7 @@ export function SettingsScreen({ navigation }: Props) {
       await saveDeviceName(deviceName);
       await saveLanguage(language);
       setAppLanguage(language);
+      setSavedLanguage(language);
       Alert.alert(t("settingsSaved"), t("settingsSavedBody"), [
         { text: t("ok"), onPress: () => navigation.goBack() }
       ]);
@@ -106,7 +110,10 @@ export function SettingsScreen({ navigation }: Props) {
               <Pressable
                 key={item}
                 accessibilityRole="button"
-                onPress={() => setLanguage(item)}
+                onPress={() => {
+                  setLanguage(item);
+                  setAppLanguage(item);
+                }}
                 style={[styles.languageButton, item === language && styles.languageButtonActive]}
               >
                 <Text style={[styles.languageText, item === language && styles.languageTextActive]}>{item}</Text>
@@ -120,7 +127,15 @@ export function SettingsScreen({ navigation }: Props) {
             <AppButton label={t("save")} onPress={handleSave} disabled={saving} />
           </View>
           <View style={styles.actionButton}>
-            <AppButton label={t("cancel")} onPress={() => navigation.goBack()} variant="secondary" disabled={saving} />
+            <AppButton
+              label={t("cancel")}
+              onPress={() => {
+                setAppLanguage(savedLanguage);
+                navigation.goBack();
+              }}
+              variant="secondary"
+              disabled={saving}
+            />
           </View>
         </View>
 
