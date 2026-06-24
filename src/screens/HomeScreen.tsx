@@ -1,7 +1,7 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { BookOpen, Download, Library, ScanBarcode, Settings as SettingsIcon, SquarePen, type LucideIcon } from "lucide-react-native";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -44,6 +44,7 @@ export function HomeScreen({ navigation }: Props) {
   const [setupLibraryInput, setSetupLibraryInput] = useState(DEFAULT_LIBRARY_NAME);
   const [setupStep, setSetupStep] = useState<SetupStep>("language");
   const [setupVisible, setSetupVisible] = useState(false);
+  const setupLanguageChosenRef = useRef(false);
   const [multiFilter, setMultiFilter] = useState<MultiFilterKey | null>(null);
   const [yearPickerTarget, setYearPickerTarget] = useState<YearPickerTarget | null>(null);
   const [yearSelectionVisible, setYearSelectionVisible] = useState(false);
@@ -75,7 +76,7 @@ export function HomeScreen({ navigation }: Props) {
       setBooks(await getBooks(library));
       setActiveLibrary(library);
       setSetupLibraryInput(library);
-      if (!storedLibrary) {
+      if (!storedLibrary && !setupLanguageChosenRef.current) {
         setSetupStep("language");
       }
       setSetupVisible(!storedLibrary);
@@ -177,6 +178,7 @@ export function HomeScreen({ navigation }: Props) {
 
   async function saveInitialLanguage(language: string) {
     const fallbackLibrary = defaultLibraryNameFor(language);
+    setupLanguageChosenRef.current = true;
     setAppLanguage(language);
     setActiveLibrary(fallbackLibrary);
     setSetupLibraryInput(fallbackLibrary);
