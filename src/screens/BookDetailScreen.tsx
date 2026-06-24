@@ -1,10 +1,10 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { Pencil, Trash2, type LucideIcon } from "lucide-react-native";
 import { useCallback, useState } from "react";
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { AppButton } from "../components/AppButton";
 import { BookForm } from "../components/BookForm";
 import { InfoRow } from "../components/InfoRow";
 import { useI18n } from "../i18n";
@@ -128,16 +128,64 @@ export function BookDetailScreen({ navigation, route }: Props) {
       </View>
 
       <View style={styles.actions}>
-        <AppButton label={t("edit")} onPress={() => setEditing(true)} />
-        <AppButton label={t("delete")} onPress={handleDelete} variant="danger" />
+        <DetailActionButton icon={Pencil} label={t("edit")} onPress={() => setEditing(true)} />
+        <DetailActionButton danger icon={Trash2} label={t("delete")} onPress={handleDelete} />
       </View>
     </ScrollView>
   );
 }
 
+type DetailActionButtonProps = {
+  danger?: boolean;
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+};
+
+function DetailActionButton({ danger = false, icon: Icon, label, onPress }: DetailActionButtonProps) {
+  const color = danger ? "#ffffff" : "#111827";
+  return (
+    <Pressable accessibilityRole="button" onPress={onPress} style={[styles.actionButton, danger && styles.actionButtonDanger]}>
+      <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.actionText, danger && styles.actionTextDanger]}>
+        {label}
+      </Text>
+      <Icon color={color} size={27} strokeWidth={1.8} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   actions: {
-    gap: 10
+    flexDirection: "row",
+    gap: 8
+  },
+  actionButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#d7dde6",
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 82,
+    paddingHorizontal: 10,
+    paddingVertical: 9
+  },
+  actionButtonDanger: {
+    backgroundColor: "#dc2626",
+    borderColor: "#dc2626"
+  },
+  actionText: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 17,
+    minHeight: 34,
+    textAlign: "center"
+  },
+  actionTextDanger: {
+    color: "#ffffff"
   },
   centered: {
     alignItems: "center",

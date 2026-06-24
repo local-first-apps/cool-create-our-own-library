@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Camera, Save, X, type LucideIcon } from "lucide-react-native";
+import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useI18n } from "../i18n";
+import { takeCoverPhoto } from "../services/coverPhoto";
 import { DEFAULT_LIBRARY_NAME, getLocations } from "../services/db";
 import { BookInput } from "../types/Book";
 import { BOOK_LANGUAGE_OPTIONS, normalizeBookLanguage } from "../utils/bookLanguage";
-import { AppButton } from "./AppButton";
 
 type BookFormProps = {
   initialValue?: Partial<BookInput>;
@@ -110,12 +111,29 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
     }
   }
 
+  async function handleTakeCoverPhoto() {
+    try {
+      const uri = await takeCoverPhoto();
+      if (uri) {
+        setValue((current) => ({ ...current, thumbnail: uri }));
+      }
+    } catch (err) {
+      setError(err instanceof Error && err.message === "CAMERA_PERMISSION_DENIED" ? t("cameraPermissionTitle") : t("cameraError"));
+    }
+  }
+
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 18}
+      style={styles.container}
+    >
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom + 32, 72) }]}
+        contentContainerStyle={[styles.content, { paddingBottom: Math.max(insets.bottom + 96, 136) }]}
         keyboardShouldPersistTaps="handled"
       >
+        {value.thumbnail ? <Image source={{ uri: value.thumbnail }} style={styles.cover} resizeMode="contain" /> : null}
+
         {FIELDS.map((field) => (
           <View key={field.key} style={styles.field}>
             <Text style={styles.label}>
@@ -173,18 +191,76 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
         {error ? <Text style={styles.error}>{error}</Text> : null}
 
         <View style={styles.actions}>
-          <AppButton label={submitLabel} onPress={handleSubmit} disabled={saving} />
-          <AppButton label={t("cancel")} onPress={onCancel} variant="secondary" disabled={saving} />
+          <FormActionButton icon={Camera} label={t("takeCoverPhoto")} onPress={() => void handleTakeCoverPhoto()} disabled={saving} />
+          <FormActionButton icon={Save} label={submitLabel} onPress={handleSubmit} disabled={saving} primary />
+          <FormActionButton icon={X} label={t("cancel")} onPress={onCancel} disabled={saving} />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
+type FormActionButtonProps = {
+  disabled?: boolean;
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+  primary?: boolean;
+};
+
+function FormActionButton({ disabled = false, icon: Icon, label, onPress, primary = false }: FormActionButtonProps) {
+  const color = primary ? "#ffffff" : "#111827";
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.actionButton, primary && styles.actionButtonPrimary, disabled && styles.actionButtonDisabled]}
+    >
+      <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.actionText, primary && styles.actionTextPrimary]}>
+        {label}
+      </Text>
+      <Icon color={color} size={25} strokeWidth={1.8} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   actions: {
-    gap: 10,
+    flexDirection: "row",
+    gap: 8,
     marginTop: 8
+  },
+  actionButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#d7dde6",
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 82,
+    paddingHorizontal: 8,
+    paddingVertical: 9
+  },
+  actionButtonDisabled: {
+    opacity: 0.55
+  },
+  actionButtonPrimary: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB"
+  },
+  actionText: {
+    color: "#111827",
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 16,
+    minHeight: 32,
+    textAlign: "center"
+  },
+  actionTextPrimary: {
+    color: "#ffffff"
   },
   container: {
     flex: 1
@@ -192,6 +268,13 @@ const styles = StyleSheet.create({
   content: {
     gap: 14,
     padding: 16
+  },
+  cover: {
+    alignSelf: "center",
+    backgroundColor: "#ffffff",
+    borderRadius: 8,
+    height: 220,
+    width: 150
   },
   error: {
     color: "#b91c1c",
