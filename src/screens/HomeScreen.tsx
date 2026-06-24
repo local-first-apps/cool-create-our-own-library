@@ -1,6 +1,16 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { BookOpen, Download, Library, ScanBarcode, Settings as SettingsIcon, SquarePen, type LucideIcon } from "lucide-react-native";
+import {
+  ArrowRight,
+  BookOpen,
+  Download,
+  Library,
+  ScanBarcode,
+  Settings as SettingsIcon,
+  SquarePen,
+  X,
+  type LucideIcon
+} from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -349,10 +359,10 @@ export function HomeScreen({ navigation }: Props) {
               value={search}
             />
             <Pressable accessibilityRole="button" onPress={openFilteredLibrary} style={styles.iconButton}>
-              <Text style={styles.iconButtonText}>{">"}</Text>
+              <ArrowRight color="#ffffff" size={24} strokeWidth={2.4} />
             </Pressable>
             <Pressable accessibilityRole="button" onPress={clearFilters} style={[styles.iconButton, styles.clearButton]}>
-              <Text style={styles.iconButtonText}>X</Text>
+              <X color="#ffffff" size={24} strokeWidth={2.4} />
             </Pressable>
           </View>
 
@@ -918,11 +928,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     minHeight: 40,
     width: 46
-  },
-  iconButtonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "900"
   },
   input: {
     backgroundColor: "#ffffff",
