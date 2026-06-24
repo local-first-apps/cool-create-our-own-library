@@ -2,7 +2,21 @@ import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { BookOpen, Download, Library, ScanBarcode, Settings as SettingsIcon, SquarePen, type LucideIcon } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
@@ -63,6 +77,7 @@ export function HomeScreen({ navigation }: Props) {
   const [deviceName, setDeviceName] = useState("Dispositivo non specificato");
   const [loading, setLoading] = useState(true);
   const [exporting, setExporting] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -93,6 +108,15 @@ export function HomeScreen({ navigation }: Props) {
       void loadData();
     }, [loadData])
   );
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () => setKeyboardVisible(true));
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => setKeyboardVisible(false));
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const categories = useMemo(() => {
     const values = books.map((book) => book.category).filter((value): value is string => Boolean(value));
@@ -270,16 +294,22 @@ export function HomeScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          {
-            paddingBottom: Math.max(insets.bottom + 32, 64),
-            paddingTop: Math.max(insets.top + 12, 38)
-          }
-        ]}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 18}
+        style={styles.keyboardAvoider}
       >
+        <ScrollView
+          contentContainerStyle={[
+            styles.content,
+            keyboardVisible && styles.contentKeyboard,
+            {
+              paddingBottom: Math.max(insets.bottom + (keyboardVisible ? 150 : 32), keyboardVisible ? 180 : 64),
+              paddingTop: Math.max(insets.top + 12, keyboardVisible ? 24 : 38)
+            }
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
         <View style={styles.header}>
           <Image resizeMode="contain" source={require("../../assets/cool-home-logo.png")} style={styles.homeLogo} />
           <View style={styles.libraryRow}>
@@ -290,17 +320,18 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <View style={styles.actionGrid}>
-          <HomeActionButton icon={ScanBarcode} label={t("scanBook")} onPress={() => navigation.navigate("Scanner")} primary />
+        <View style={[styles.actionGrid, keyboardVisible && styles.actionGridCompact]}>
+          <HomeActionButton compact={keyboardVisible} icon={ScanBarcode} label={t("scanBook")} onPress={() => navigation.navigate("Scanner")} primary />
           <HomeActionButton
+            compact={keyboardVisible}
             icon={SquarePen}
             label={t("addManually")}
             onPress={() => navigation.navigate("ManualBook", { initialBook: { library: activeLibrary } })}
           />
-          <HomeActionButton icon={Library} label={t("viewLibrary")} onPress={() => navigation.navigate("Library")} />
-          <HomeActionButton icon={Download} label={t("export")} onPress={handleExport} disabled={exporting} />
-          <HomeActionButton icon={SettingsIcon} label={t("settings")} onPress={() => navigation.navigate("Settings")} />
-          <HomeActionButton icon={BookOpen} label={t("instructions")} onPress={() => navigation.navigate("Instructions")} />
+          <HomeActionButton compact={keyboardVisible} icon={Library} label={t("viewLibrary")} onPress={() => navigation.navigate("Library")} />
+          <HomeActionButton compact={keyboardVisible} icon={Download} label={t("export")} onPress={handleExport} disabled={exporting} />
+          <HomeActionButton compact={keyboardVisible} icon={SettingsIcon} label={t("settings")} onPress={() => navigation.navigate("Settings")} />
+          <HomeActionButton compact={keyboardVisible} icon={BookOpen} label={t("instructions")} onPress={() => navigation.navigate("Instructions")} />
         </View>
 
         <View style={styles.filters}>
@@ -337,27 +368,27 @@ export function HomeScreen({ navigation }: Props) {
             <Pressable
               disabled={years.length === 0}
               onPress={() => setYearPickerTarget("from")}
-              style={[styles.rangeButton, years.length === 0 && styles.rangeButtonDisabled]}
+              style={[styles.rangeButton, yearFrom && styles.rangeButtonActive, years.length === 0 && styles.rangeButtonDisabled]}
             >
-              <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
+              <Text style={[styles.rangeButtonText, yearFrom && styles.rangeButtonTextActive, years.length === 0 && styles.rangeButtonTextDisabled]}>
                 {t("from")}: {yearFrom ?? "-"}
               </Text>
             </Pressable>
             <Pressable
               disabled={years.length === 0}
               onPress={() => setYearPickerTarget("to")}
-              style={[styles.rangeButton, years.length === 0 && styles.rangeButtonDisabled]}
+              style={[styles.rangeButton, yearTo && styles.rangeButtonActive, years.length === 0 && styles.rangeButtonDisabled]}
             >
-              <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
+              <Text style={[styles.rangeButtonText, yearTo && styles.rangeButtonTextActive, years.length === 0 && styles.rangeButtonTextDisabled]}>
                 {t("to")}: {yearTo ?? "-"}
               </Text>
             </Pressable>
             <Pressable
               disabled={years.length === 0}
               onPress={() => setYearSelectionVisible(true)}
-              style={[styles.rangeButtonWide, years.length === 0 && styles.rangeButtonDisabled]}
+              style={[styles.rangeButtonWide, selectedYears.length > 0 && styles.rangeButtonActive, years.length === 0 && styles.rangeButtonDisabled]}
             >
-              <Text style={[styles.rangeButtonText, years.length === 0 && styles.rangeButtonTextDisabled]}>
+              <Text style={[styles.rangeButtonText, selectedYears.length > 0 && styles.rangeButtonTextActive, years.length === 0 && styles.rangeButtonTextDisabled]}>
                 {selectedYears.length > 0 ? `${t("years")} (${selectedYears.length})` : t("select")}
               </Text>
             </Pressable>
@@ -365,7 +396,8 @@ export function HomeScreen({ navigation }: Props) {
         </View>
 
         {loading ? <ActivityIndicator style={styles.loader} /> : null}
-      </ScrollView>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <Modal animationType="slide" onRequestClose={() => setMultiFilter(null)} transparent visible={Boolean(multiFilter)}>
         <View style={styles.modalBackdrop}>
@@ -606,6 +638,7 @@ function FilterPickerButton({ count, label, onPress }: FilterPickerButtonProps) 
 }
 
 type HomeActionButtonProps = {
+  compact?: boolean;
   disabled?: boolean;
   icon: LucideIcon;
   label: string;
@@ -613,19 +646,28 @@ type HomeActionButtonProps = {
   primary?: boolean;
 };
 
-function HomeActionButton({ disabled = false, icon: Icon, label, onPress, primary = false }: HomeActionButtonProps) {
+function HomeActionButton({ compact = false, disabled = false, icon: Icon, label, onPress, primary = false }: HomeActionButtonProps) {
   const color = primary ? "#ffffff" : "#111827";
   return (
     <Pressable
       accessibilityRole="button"
       disabled={disabled}
       onPress={onPress}
-      style={[styles.homeActionButton, primary && styles.homeActionButtonPrimary, disabled && styles.homeActionButtonDisabled]}
+      style={[
+        styles.homeActionButton,
+        compact && styles.homeActionButtonCompact,
+        primary && styles.homeActionButtonPrimary,
+        disabled && styles.homeActionButtonDisabled
+      ]}
     >
-      <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.homeActionText, primary && styles.homeActionTextPrimary]}>
+      <Text
+        numberOfLines={2}
+        adjustsFontSizeToFit
+        style={[styles.homeActionText, compact && styles.homeActionTextCompact, primary && styles.homeActionTextPrimary]}
+      >
         {label}
       </Text>
-      <Icon color={color} size={27} strokeWidth={1.8} />
+      <Icon color={color} size={compact ? 20 : 27} strokeWidth={1.8} />
     </Pressable>
   );
 }
@@ -683,6 +725,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8
   },
+  actionGridCompact: {
+    gap: 6,
+    marginBottom: 6
+  },
   bookCount: {
     color: "#334155",
     fontSize: 14,
@@ -699,6 +745,9 @@ const styles = StyleSheet.create({
   content: {
     padding: 14,
     paddingTop: 38
+  },
+  contentKeyboard: {
+    gap: 8
   },
   counter: {
     color: "#64748b",
@@ -833,6 +882,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10
   },
+  homeActionButtonCompact: {
+    gap: 2,
+    minHeight: 58,
+    paddingHorizontal: 8,
+    paddingVertical: 6
+  },
   homeActionButtonDisabled: {
     opacity: 0.55
   },
@@ -847,6 +902,11 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     minHeight: 34,
     textAlign: "center"
+  },
+  homeActionTextCompact: {
+    fontSize: 11,
+    lineHeight: 14,
+    minHeight: 26
   },
   homeActionTextPrimary: {
     color: "#ffffff"
@@ -884,6 +944,9 @@ const styles = StyleSheet.create({
     fontSize: 15,
     minHeight: 46,
     paddingHorizontal: 12
+  },
+  keyboardAvoider: {
+    flex: 1
   },
   libraryRow: {
     alignItems: "center",
@@ -1004,10 +1067,17 @@ const styles = StyleSheet.create({
     minHeight: 36,
     paddingHorizontal: 10
   },
+  rangeButtonActive: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB"
+  },
   rangeButtonText: {
     color: "#334155",
     fontSize: 13,
     fontWeight: "800"
+  },
+  rangeButtonTextActive: {
+    color: "#ffffff"
   },
   rangeButtonDisabled: {
     opacity: 0.55

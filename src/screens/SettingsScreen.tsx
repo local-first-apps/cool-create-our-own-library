@@ -27,6 +27,7 @@ import { RootStackParamList } from "../types/Navigation";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
 type LegalModal = "terms" | "privacy" | null;
+const APP_VERSION_LABEL = "COOL | Create Our Own Library (1.0.0 - build 1)";
 
 export function SettingsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -165,6 +166,8 @@ export function SettingsScreen({ navigation }: Props) {
           <LegalLinkButton label={t("terms")} onPress={() => setLegalModal("terms")} />
           <LegalLinkButton label={t("privacy")} onPress={() => setLegalModal("privacy")} />
         </View>
+
+        <Text style={styles.appVersion}>{APP_VERSION_LABEL}</Text>
       </ScrollView>
 
       <Modal animationType="slide" onRequestClose={() => setLegalModal(null)} transparent visible={Boolean(legalModal)}>
@@ -322,6 +325,12 @@ const styles = StyleSheet.create({
   },
   legalTextBox: {
     maxHeight: 380
+  },
+  appVersion: {
+    color: "#64748b",
+    fontSize: 11,
+    marginTop: 18,
+    textAlign: "center"
   },
   modalActions: {
     marginTop: 12
