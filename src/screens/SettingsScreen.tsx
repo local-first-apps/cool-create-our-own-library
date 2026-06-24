@@ -5,9 +5,16 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
-import { useI18n } from "../i18n";
-import { renameLibrary } from "../services/db";
 import {
+  defaultDeviceNameFor,
+  defaultLibraryNameFor,
+  isLocalizedDefaultDeviceName,
+  isLocalizedDefaultLibraryName,
+  useI18n
+} from "../i18n";
+import { DEFAULT_LIBRARY_NAME, renameLibrary } from "../services/db";
+import {
+  DEFAULT_DEVICE_NAME,
   DEFAULT_LANGUAGE,
   SUPPORTED_LANGUAGES,
   getActiveLibrary,
@@ -39,15 +46,16 @@ export function SettingsScreen({ navigation }: Props) {
           setDeviceName(settings.deviceName);
           setLanguage(settings.language);
           setSavedLanguage(settings.language);
-          setLibraryName(activeLibrary);
+          setLibraryName(activeLibrary === DEFAULT_LIBRARY_NAME ? defaultLibraryNameFor(settings.language) : activeLibrary);
           setCurrentLibraryName(activeLibrary);
+          setDeviceName(settings.deviceName === DEFAULT_DEVICE_NAME ? defaultDeviceNameFor(settings.language) : settings.deviceName);
         })
         .catch(() => {
-          setDeviceName("Dispositivo non specificato");
+          setDeviceName(defaultDeviceNameFor(DEFAULT_LANGUAGE));
           setLanguage(DEFAULT_LANGUAGE);
           setSavedLanguage(DEFAULT_LANGUAGE);
-          setLibraryName("Biblioteca principale");
-          setCurrentLibraryName("Biblioteca principale");
+          setLibraryName(defaultLibraryNameFor(DEFAULT_LANGUAGE));
+          setCurrentLibraryName(DEFAULT_LIBRARY_NAME);
         });
     }, [])
   );
@@ -96,7 +104,7 @@ export function SettingsScreen({ navigation }: Props) {
           <TextInput
             autoCapitalize="sentences"
             onChangeText={setDeviceName}
-            placeholder="Es. iPhone Roberto"
+            placeholder={t("deviceNamePlaceholder")}
             placeholderTextColor="#8a94a6"
             style={styles.input}
             value={deviceName}
@@ -111,6 +119,12 @@ export function SettingsScreen({ navigation }: Props) {
                 key={item}
                 accessibilityRole="button"
                 onPress={() => {
+                  if (isLocalizedDefaultLibraryName(libraryName)) {
+                    setLibraryName(defaultLibraryNameFor(item));
+                  }
+                  if (isLocalizedDefaultDeviceName(deviceName)) {
+                    setDeviceName(defaultDeviceNameFor(item));
+                  }
                   setLanguage(item);
                   setAppLanguage(item);
                 }}
@@ -188,21 +202,21 @@ function LegalLinkButton({ label, onPress }: LegalLinkButtonProps) {
 }
 
 const TERMS_TEXT = [
-  "COOL | Create Our Own Library e' un'app per catalogare libri su un dispositivo personale.",
-  "L'utente e' responsabile dei dati inseriti, delle modifiche, delle cancellazioni e dei file esportati.",
-  "Le informazioni recuperate da Google Books possono essere incomplete, inesatte o non disponibili. L'utente puo' correggere manualmente i dati prima o dopo il salvataggio.",
-  "L'app non offre sincronizzazione cloud, account utente, backup remoto o recupero automatico dei dati. E' consigliabile esportare periodicamente la biblioteca.",
+  "COOL | Create Our Own Library è un'app per catalogare libri su un dispositivo personale.",
+  "L'utente è responsabile dei dati inseriti, delle modifiche, delle cancellazioni e dei file esportati.",
+  "Le informazioni recuperate da Google Books possono essere incomplete, inesatte o non disponibili. L'utente può correggere manualmente i dati prima o dopo il salvataggio.",
+  "L'app non offre sincronizzazione cloud, account utente, backup remoto o recupero automatico dei dati. È consigliabile esportare periodicamente la biblioteca.",
   "I file CSV, Excel e Word sono generati sul telefono e possono essere condivisi tramite le funzioni del sistema operativo.",
-  "Il servizio e' fornito senza garanzia di disponibilita' continua o assenza di errori. Per una distribuzione commerciale, questi termini andranno verificati e adattati al paese di pubblicazione."
+  "Il servizio è fornito senza garanzia di disponibilità continua o assenza di errori. Per una distribuzione commerciale, questi termini andranno verificati e adattati al paese di pubblicazione."
 ];
 
 const PRIVACY_TEXT = [
   "COOL | Create Our Own Library salva la biblioteca nel database SQLite locale del telefono.",
   "L'app non usa backend, database remoto, Render, Firebase, Supabase o sincronizzazione cloud.",
   "Il nome dispositivo, il nome biblioteca e i libri salvati restano sul telefono, salvo esportazione o condivisione avviata dall'utente.",
-  "Quando si scansiona o inserisce un ISBN, l'app puo' interrogare Google Books API per recuperare titolo, autori, editore, anno, categoria, lingua, sinossi e copertina. In quel caso la richiesta viene inviata a Google.",
+  "Quando si scansiona o inserisce un ISBN, l'app può interrogare Google Books API per recuperare titolo, autori, editore, anno, categoria, lingua, sinossi e copertina. In quel caso la richiesta viene inviata a Google.",
   "L'app richiede il permesso fotocamera per leggere i codici a barre. I file esportati vengono condivisi solo tramite le funzioni di condivisione scelte dall'utente.",
-  "Per una pubblicazione su App Store o Google Play, questa informativa dovra' essere completata con dati del titolare, contatti, paese applicabile e collegamenti pubblici richiesti dagli store."
+  "Per una pubblicazione su App Store o Google Play, questa informativa dovrà essere completata con dati del titolare, contatti, paese applicabile e collegamenti pubblici richiesti dagli store."
 ];
 
 const styles = StyleSheet.create({

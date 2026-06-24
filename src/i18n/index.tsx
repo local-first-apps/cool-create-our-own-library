@@ -13,7 +13,7 @@ const messages = {
     authorMissing: "Autore non indicato",
     authors: "Autori",
     back: "Indietro",
-    bookAdded: "Il libro e' stato aggiunto alla biblioteca.",
+    bookAdded: "Il libro è stato aggiunto alla biblioteca.",
     bookCount: "{count} {count, plural, one {libro} other {libri}}",
     bookDetail: "Dettaglio libro",
     bookNotAvailable: "Libro non disponibile.",
@@ -31,14 +31,17 @@ const messages = {
     close: "Chiudi",
     confirmBook: "Conferma libro",
     dataAndPrivacy: "Dati e privacy",
+    defaultDeviceName: "Dispositivo non specificato",
+    defaultLibraryName: "Biblioteca principale",
     delete: "Elimina",
     deselectAll: "Deseleziona tutti",
     deviceNameDescription: "Questo nome viene salvato solo sul telefono.",
     deviceNameField: "Nome dispositivo",
-    deleteBookBody: "L'operazione non puo' essere annullata.",
+    deviceNamePlaceholder: "Es. telefono Roberto",
+    deleteBookBody: "L'operazione non può essere annullata.",
     deleteBookTitle: "Eliminare il libro?",
     duplicate: "Duplicato",
-    duplicateBody: "Questo libro e' gia' presente nella biblioteca.",
+    duplicateBody: "Questo libro è già presente nella biblioteca.",
     edit: "Modifica",
     editData: "Modifica dati",
     emptyLibrary: "Nessun libro trovato.",
@@ -52,7 +55,7 @@ const messages = {
     exportSelectFieldsTitle: "Campi export",
     exportTitle: "Esporta",
     feedback: "Feedback",
-    feedbackBody: "Le recensioni saranno collegate alla pagina Google Play quando l'app sara' pubblicata. Per ora puoi inviare osservazioni al referente dell'app.",
+    feedbackBody: "Le recensioni saranno collegate alla pagina Google Play quando l'app sarà pubblicata. Per ora puoi inviare osservazioni al referente dell'app.",
     feedbackTitle: "Feedback e recensioni",
     filteredResults: "Risultati filtrati",
     filteredView: "Vista filtrata",
@@ -99,7 +102,7 @@ const messages = {
     settings: "Impostazioni",
     settingsSaved: "Impostazioni salvate",
     settingsSavedBody: "Biblioteca, dispositivo e lingua sono stati aggiornati.",
-    shareUnavailable: "La condivisione non e' disponibile su questo dispositivo.",
+    shareUnavailable: "La condivisione non è disponibile su questo dispositivo.",
     shelf: "Scaffale/Stanza",
     shelfPlaceholder: "Es. Salotto, studio, scaffale A",
     subtitle: "Sottotitolo",
@@ -155,10 +158,13 @@ const messages = {
     close: "Close",
     confirmBook: "Confirm book",
     dataAndPrivacy: "Data and privacy",
+    defaultDeviceName: "Device not specified",
+    defaultLibraryName: "Main library",
     delete: "Delete",
     deselectAll: "Deselect all",
     deviceNameDescription: "This name is saved only on this phone.",
     deviceNameField: "Device name",
+    deviceNamePlaceholder: "E.g. Roberto's phone",
     deleteBookBody: "This action cannot be undone.",
     deleteBookTitle: "Delete book?",
     duplicate: "Duplicate",
@@ -279,10 +285,13 @@ const messages = {
     close: "Fermer",
     confirmBook: "Confirmer le livre",
     dataAndPrivacy: "Données et confidentialité",
+    defaultDeviceName: "Appareil non indiqué",
+    defaultLibraryName: "Bibliothèque principale",
     delete: "Supprimer",
     deselectAll: "Tout désélectionner",
     deviceNameDescription: "Ce nom est enregistré seulement sur ce téléphone.",
     deviceNameField: "Nom appareil",
+    deviceNamePlaceholder: "Ex. téléphone Roberto",
     deleteBookBody: "Cette action est irréversible.",
     deleteBookTitle: "Supprimer le livre ?",
     duplicate: "Doublon",
@@ -403,10 +412,13 @@ const messages = {
     close: "Cerrar",
     confirmBook: "Confirmar libro",
     dataAndPrivacy: "Datos y privacidad",
+    defaultDeviceName: "Dispositivo no especificado",
+    defaultLibraryName: "Biblioteca principal",
     delete: "Eliminar",
     deselectAll: "Deseleccionar todo",
     deviceNameDescription: "Este nombre se guarda solo en este teléfono.",
     deviceNameField: "Nombre dispositivo",
+    deviceNamePlaceholder: "Ej. teléfono de Roberto",
     deleteBookBody: "Esta acción no se puede deshacer.",
     deleteBookTitle: "¿Eliminar el libro?",
     duplicate: "Duplicado",
@@ -527,10 +539,13 @@ const messages = {
     close: "Schließen",
     confirmBook: "Buch bestätigen",
     dataAndPrivacy: "Daten und Datenschutz",
+    defaultDeviceName: "Gerät nicht angegeben",
+    defaultLibraryName: "Hauptbibliothek",
     delete: "Löschen",
     deselectAll: "Alle abwählen",
     deviceNameDescription: "Dieser Name wird nur auf diesem Telefon gespeichert.",
     deviceNameField: "Gerätename",
+    deviceNamePlaceholder: "Z.B. Robertos Telefon",
     deleteBookBody: "Diese Aktion kann nicht rückgängig gemacht werden.",
     deleteBookTitle: "Buch löschen?",
     duplicate: "Duplikat",
@@ -681,4 +696,20 @@ export function useI18n(): I18nContextValue {
 
 export function exportFieldLabelKey(key: string): MessageKey {
   return `exportField_${key}` as MessageKey;
+}
+
+export function defaultLibraryNameFor(language: string): string {
+  return messages[normalizeLanguage(language)].defaultLibraryName;
+}
+
+export function defaultDeviceNameFor(language: string): string {
+  return messages[normalizeLanguage(language)].defaultDeviceName;
+}
+
+export function isLocalizedDefaultLibraryName(value: string): boolean {
+  return SUPPORTED_APP_LANGUAGES.some((language) => messages[language].defaultLibraryName === value);
+}
+
+export function isLocalizedDefaultDeviceName(value: string): boolean {
+  return SUPPORTED_APP_LANGUAGES.some((language) => messages[language].defaultDeviceName === value);
 }

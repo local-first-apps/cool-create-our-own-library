@@ -187,7 +187,7 @@ export async function getBookByIsbn(isbn: string): Promise<Book | null> {
 export async function saveBook(input: BookInput): Promise<SaveBookResult> {
   const title = input.title.trim();
   if (!title) {
-    throw new Error("Il titolo e' obbligatorio.");
+    throw new Error("Il titolo è obbligatorio.");
   }
 
   const isbn = cleanOptionalText(normalizeIsbn(input.isbn));
@@ -240,7 +240,7 @@ export async function saveBook(input: BookInput): Promise<SaveBookResult> {
 
   const book = await getBookById(result.lastInsertRowId);
   if (!book) {
-    throw new Error("Il libro e' stato salvato, ma non e' stato possibile rileggerlo.");
+    throw new Error("Il libro è stato salvato, ma non è stato possibile rileggerlo.");
   }
 
   await saveLocationIfPresent(shelf);
@@ -250,14 +250,14 @@ export async function saveBook(input: BookInput): Promise<SaveBookResult> {
 export async function updateBook(id: number, input: BookInput): Promise<Book> {
   const title = input.title.trim();
   if (!title) {
-    throw new Error("Il titolo e' obbligatorio.");
+    throw new Error("Il titolo è obbligatorio.");
   }
 
   const isbn = cleanOptionalText(normalizeIsbn(input.isbn));
   if (isbn) {
     const existing = await getBookByIsbn(isbn);
     if (existing && existing.id !== id) {
-      throw new Error("Questo ISBN e' gia' presente nella biblioteca.");
+      throw new Error("Questo ISBN è già presente nella biblioteca.");
     }
   }
 

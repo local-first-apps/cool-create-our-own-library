@@ -364,7 +364,7 @@ function makeDocx(books: Book[], deviceName: string, fields: ExportField[], libr
 async function shareFile(file: File, mimeType: string, dialogTitle: string, UTI?: string): Promise<string> {
   const sharingAvailable = await Sharing.isAvailableAsync();
   if (!sharingAvailable) {
-    throw new Error("La condivisione non e' disponibile su questo dispositivo.");
+    throw new Error("La condivisione non è disponibile su questo dispositivo.");
   }
 
   await Sharing.shareAsync(file.uri, {

@@ -1,11 +1,12 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { BookOpen, Download, Library, ScanBarcode, Settings as SettingsIcon, SquarePen, type LucideIcon } from "lucide-react-native";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActivityIndicator, Alert, Image, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
-import { exportFieldLabelKey, useI18n } from "../i18n";
+import { defaultLibraryNameFor, exportFieldLabelKey, useI18n } from "../i18n";
 import {
   DEFAULT_EXPORT_FIELD_KEYS,
   EXPORT_FIELDS,
@@ -26,6 +27,14 @@ type YearPickerTarget = "from" | "to";
 type MultiFilterKey = "authors" | "categories" | "languages" | "locations";
 type ExportScope = "filtered" | "all";
 type SetupStep = "language" | "library";
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  DE: "Deutsch",
+  EN: "English",
+  ES: "Español",
+  FR: "Français",
+  IT: "Italiano"
+};
 
 export function HomeScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -61,7 +70,8 @@ export function HomeScreen({ navigation }: Props) {
         getStoredActiveLibrary(),
         getSettings()
       ]);
-      const library = storedLibrary ?? DEFAULT_LIBRARY_NAME;
+      const fallbackLibrary = defaultLibraryNameFor(settings.language);
+      const library = storedLibrary ?? fallbackLibrary;
       setBooks(await getBooks(library));
       setActiveLibrary(library);
       setSetupLibraryInput(library);
@@ -166,10 +176,14 @@ export function HomeScreen({ navigation }: Props) {
   }
 
   async function saveInitialLanguage(language: string) {
+    const fallbackLibrary = defaultLibraryNameFor(language);
+    setAppLanguage(language);
+    setActiveLibrary(fallbackLibrary);
+    setSetupLibraryInput(fallbackLibrary);
+    setSetupStep("library");
+
     try {
       await saveLanguage(language);
-      setAppLanguage(language);
-      setSetupStep("library");
     } catch (err) {
       Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     }
@@ -274,17 +288,17 @@ export function HomeScreen({ navigation }: Props) {
           </View>
         </View>
 
-        <View style={styles.actions}>
-          <AppButton label={t("scanBook")} onPress={() => navigation.navigate("Scanner")} />
-          <AppButton
+        <View style={styles.actionGrid}>
+          <HomeActionButton icon={ScanBarcode} label={t("scanBook")} onPress={() => navigation.navigate("Scanner")} primary />
+          <HomeActionButton
+            icon={SquarePen}
             label={t("addManually")}
             onPress={() => navigation.navigate("ManualBook", { initialBook: { library: activeLibrary } })}
-            variant="secondary"
           />
-          <AppButton label={t("viewLibrary")} onPress={() => navigation.navigate("Library")} variant="secondary" />
-          <AppButton label={t("export")} onPress={handleExport} variant="secondary" disabled={exporting} />
-          <AppButton label={t("settings")} onPress={() => navigation.navigate("Settings")} variant="secondary" />
-          <AppButton label={t("instructions")} onPress={() => navigation.navigate("Instructions")} variant="secondary" />
+          <HomeActionButton icon={Library} label={t("viewLibrary")} onPress={() => navigation.navigate("Library")} />
+          <HomeActionButton icon={Download} label={t("export")} onPress={handleExport} disabled={exporting} />
+          <HomeActionButton icon={SettingsIcon} label={t("settings")} onPress={() => navigation.navigate("Settings")} />
+          <HomeActionButton icon={BookOpen} label={t("instructions")} onPress={() => navigation.navigate("Instructions")} />
         </View>
 
         <View style={styles.filters}>
@@ -494,7 +508,6 @@ export function HomeScreen({ navigation }: Props) {
           <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
             {setupStep === "language" ? (
               <>
-                <Text style={styles.modalTitle}>{t("language")}</Text>
                 <View style={styles.setupLanguageGrid}>
                   {SUPPORTED_LANGUAGES.map((language) => (
                     <Pressable
@@ -503,7 +516,7 @@ export function HomeScreen({ navigation }: Props) {
                       onPress={() => void saveInitialLanguage(language)}
                       style={styles.setupLanguageButton}
                     >
-                      <Text style={styles.setupLanguageText}>{language}</Text>
+                      <Text style={styles.setupLanguageText}>{LANGUAGE_LABELS[language] ?? language}</Text>
                     </Pressable>
                   ))}
                 </View>
@@ -590,6 +603,31 @@ function FilterPickerButton({ count, label, onPress }: FilterPickerButtonProps) 
   );
 }
 
+type HomeActionButtonProps = {
+  disabled?: boolean;
+  icon: LucideIcon;
+  label: string;
+  onPress: () => void;
+  primary?: boolean;
+};
+
+function HomeActionButton({ disabled = false, icon: Icon, label, onPress, primary = false }: HomeActionButtonProps) {
+  const color = primary ? "#ffffff" : "#111827";
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={onPress}
+      style={[styles.homeActionButton, primary && styles.homeActionButtonPrimary, disabled && styles.homeActionButtonDisabled]}
+    >
+      <Text numberOfLines={2} adjustsFontSizeToFit style={[styles.homeActionText, primary && styles.homeActionTextPrimary]}>
+        {label}
+      </Text>
+      <Icon color={color} size={27} strokeWidth={1.8} />
+    </Pressable>
+  );
+}
+
 type ModalActionButtonProps = {
   disabled?: boolean;
   label: string;
@@ -637,8 +675,10 @@ function ExportScopeButton({ active, disabled = false, label, onPress }: ExportS
 }
 
 const styles = StyleSheet.create({
-  actions: {
-    gap: 6,
+  actionGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
     marginBottom: 8
   },
   bookCount: {
@@ -776,6 +816,38 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginTop: 0,
     width: "100%"
+  },
+  homeActionButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#d7dde6",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexBasis: "48%",
+    flexGrow: 1,
+    gap: 6,
+    justifyContent: "center",
+    minHeight: 88,
+    paddingHorizontal: 10,
+    paddingVertical: 10
+  },
+  homeActionButtonDisabled: {
+    opacity: 0.55
+  },
+  homeActionButtonPrimary: {
+    backgroundColor: "#2563EB",
+    borderColor: "#2563EB"
+  },
+  homeActionText: {
+    color: "#111827",
+    fontSize: 13,
+    fontWeight: "800",
+    lineHeight: 17,
+    minHeight: 34,
+    textAlign: "center"
+  },
+  homeActionTextPrimary: {
+    color: "#ffffff"
   },
   iconButton: {
     alignItems: "center",
@@ -962,21 +1034,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: "#2563EB",
     borderRadius: 8,
-    flexBasis: "30%",
-    flexGrow: 1,
     justifyContent: "center",
-    minHeight: 44,
-    paddingHorizontal: 10
+    minHeight: 48,
+    paddingHorizontal: 12
   },
   setupLanguageGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 8
+    gap: 10
   },
   setupLanguageText: {
     color: "#ffffff",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "900"
   },
   subtitle: {
