@@ -70,7 +70,7 @@ export function BookDetailScreen({ navigation, route }: Props) {
         onPress: async () => {
           try {
             await deleteBook(book.id);
-            navigation.popToTop();
+            navigation.goBack();
           } catch (err) {
             Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
           }

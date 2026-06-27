@@ -22,7 +22,9 @@ const SECTIONS: Record<AppLanguage, InstructionSection[]> = {
         "Usa \"Scansiona libro\" per leggere un ISBN con la fotocamera.",
         "La scansione funziona meglio con buona illuminazione. Tieni il codice a barre ben visibile e fermo.",
         "Se Google Books trova dati utili, puoi controllarli, modificarli e salvarli.",
-        "Usa \"Aggiungi manualmente\" quando il codice non esiste o i dati non sono disponibili."
+        "Usa \"Aggiungi manualmente\" quando il codice non esiste o i dati non sono disponibili.",
+        "Da \"Aggiungi manualmente\" puoi cercare anche per ISBN o per titolo, oppure compilare i campi a mano.",
+        "Usa \"Fotografa copertina\" per aggiungere una copertina quando Google Books non la fornisce."
       ]
     },
     {
@@ -30,7 +32,7 @@ const SECTIONS: Record<AppLanguage, InstructionSection[]> = {
       body: [
         "Apri un libro dalla biblioteca per vedere i dettagli, modificarlo o eliminarlo.",
         "Scaffale/Stanza serve per indicare dove si trova il libro.",
-        "Le posizioni già usate vengono proposte quando inserisci nuovi libri."
+        "Le posizioni ancora usate nella biblioteca vengono proposte quando inserisci nuovi libri."
       ]
     },
     {
@@ -54,7 +56,7 @@ const SECTIONS: Record<AppLanguage, InstructionSection[]> = {
       body: [
         "L'app non usa backend, cloud o database remoto.",
         "I dati restano sul telefono salvo export o condivisione avviata da te.",
-        "Google Books viene contattato solo per recuperare informazioni da un ISBN."
+        "Google Books viene contattato solo per recuperare informazioni da un ISBN o da un titolo."
       ]
     }
   ],
@@ -72,7 +74,9 @@ const SECTIONS: Record<AppLanguage, InstructionSection[]> = {
         "Use \"Scan book\" to read an ISBN with the camera.",
         "Scanning works best with good lighting. Keep the barcode clearly visible and steady.",
         "If Google Books returns useful data, you can review, edit and save it.",
-        "Use \"Add manually\" when the code does not exist or data is not available."
+        "Use \"Add manually\" when the code does not exist or data is not available.",
+        "From \"Add manually\" you can also search by ISBN or title, or fill in the fields by hand.",
+        "Use \"Take cover photo\" to add a cover when Google Books does not provide one."
       ]
     },
     {
@@ -80,7 +84,7 @@ const SECTIONS: Record<AppLanguage, InstructionSection[]> = {
       body: [
         "Open a book from the library to view details, edit it or delete it.",
         "Shelf/Room indicates where the book is located.",
-        "Previously used locations are suggested when you add new books."
+        "Locations still used in the library are suggested when you add new books."
       ]
     },
     {
@@ -104,33 +108,33 @@ const SECTIONS: Record<AppLanguage, InstructionSection[]> = {
       body: [
         "The app does not use a backend, cloud or remote database.",
         "Data stays on the phone unless you export or share it.",
-        "Google Books is contacted only to retrieve information from an ISBN."
+        "Google Books is contacted only to retrieve information from an ISBN or a title."
       ]
     }
   ],
   FR: [
     { title: "Usage", body: ["COOL catalogue les livres dans la base locale du téléphone.", "Chaque téléphone a sa propre bibliothèque et peut exporter ses fichiers."] },
-    { title: "Ajouter des livres", body: ["Utilisez \"Scanner un livre\" pour lire un ISBN avec la caméra.", "La lecture marche mieux avec une bonne lumière. Gardez le code-barres visible et immobile.", "Si Google Books trouve des données, vous pouvez les vérifier, les modifier et les enregistrer.", "Utilisez \"Ajouter manuellement\" si le code n'existe pas ou si les données sont indisponibles."] },
-    { title: "Modifier et organiser", body: ["Ouvrez un livre pour voir les détails, le modifier ou le supprimer.", "\"Étagère/Pièce\" indique où se trouve le livre.", "Les emplacements déjà utilisés sont proposés lors de nouveaux ajouts."] },
+    { title: "Ajouter des livres", body: ["Utilisez \"Scanner un livre\" pour lire un ISBN avec la caméra.", "La lecture marche mieux avec une bonne lumière. Gardez le code-barres visible et immobile.", "Si Google Books trouve des données, vous pouvez les vérifier, les modifier et les enregistrer.", "Utilisez \"Ajouter manuellement\" si le code n'existe pas ou si les données sont indisponibles.", "Depuis \"Ajouter manuellement\", vous pouvez aussi rechercher par ISBN ou par titre, ou saisir les champs à la main.", "Utilisez \"Photo couverture\" pour ajouter une couverture si Google Books n'en fournit pas."] },
+    { title: "Modifier et organiser", body: ["Ouvrez un livre pour voir les détails, le modifier ou le supprimer.", "\"Étagère/Pièce\" indique où se trouve le livre.", "Les emplacements encore utilisés dans la bibliothèque sont proposés lors de nouveaux ajouts."] },
     { title: "Rechercher et filtrer", body: ["Dans Home, recherchez par texte et filtrez par catégorie, auteur, langue, emplacement et année.", "\"Voir bibliothèque\" affiche toujours la liste complète.", "Le bouton près de la recherche ouvre la liste filtrée."] },
     { title: "Exporter", body: ["\"Exporter\" crée des fichiers CSV, Excel ou Word.", "Vous pouvez choisir les champs et définir un ordre partiel des colonnes.", "Les lignes sont triées selon la première colonne exportée."] },
-    { title: "Données et confidentialité", body: ["L'app n'utilise pas de backend, cloud ou base distante.", "Les données restent sur le téléphone sauf export ou partage.", "Google Books est contacté seulement pour récupérer des informations depuis un ISBN."] }
+    { title: "Données et confidentialité", body: ["L'app n'utilise pas de backend, cloud ou base distante.", "Les données restent sur le téléphone sauf export ou partage.", "Google Books est contacté seulement pour récupérer des informations depuis un ISBN ou un titre."] }
   ],
   ES: [
     { title: "Para qué sirve", body: ["COOL cataloga libros guardándolos en la base local del teléfono.", "Cada teléfono tiene su propia biblioteca y puede exportar sus archivos."] },
-    { title: "Añadir libros", body: ["Usa \"Escanear libro\" para leer un ISBN con la cámara.", "La lectura funciona mejor con buena iluminación. Mantén el código de barras visible y quieto.", "Si Google Books encuentra datos, puedes revisarlos, modificarlos y guardarlos.", "Usa \"Añadir manualmente\" cuando el código no exista o no haya datos."] },
-    { title: "Modificar y organizar", body: ["Abre un libro para ver detalles, modificarlo o eliminarlo.", "\"Estante/Sala\" indica dónde está el libro.", "Las ubicaciones ya usadas se proponen al añadir nuevos libros."] },
+    { title: "Añadir libros", body: ["Usa \"Escanear libro\" para leer un ISBN con la cámara.", "La lectura funciona mejor con buena iluminación. Mantén el código de barras visible y quieto.", "Si Google Books encuentra datos, puedes revisarlos, modificarlos y guardarlos.", "Usa \"Añadir manualmente\" cuando el código no exista o no haya datos.", "Desde \"Añadir manualmente\" también puedes buscar por ISBN o por título, o rellenar los campos a mano.", "Usa \"Foto cubierta\" para añadir una cubierta cuando Google Books no la proporcione."] },
+    { title: "Modificar y organizar", body: ["Abre un libro para ver detalles, modificarlo o eliminarlo.", "\"Estante/Sala\" indica dónde está el libro.", "Las ubicaciones que aún se usan en la biblioteca se proponen al añadir nuevos libros."] },
     { title: "Buscar y filtrar", body: ["En Home puedes buscar por texto y filtrar por categoría, autor, idioma, ubicación y año.", "\"Ver biblioteca\" muestra siempre la lista completa.", "El botón junto a la búsqueda abre la lista filtrada."] },
     { title: "Exportar", body: ["\"Exportar\" genera archivos CSV, Excel o Word.", "Puedes elegir los campos y definir un orden parcial de columnas.", "Los registros se ordenan por la primera columna exportada."] },
-    { title: "Datos y privacidad", body: ["La app no usa backend, nube ni base remota.", "Los datos quedan en el teléfono salvo exportación o uso compartido.", "Google Books se contacta solo para recuperar información desde un ISBN."] }
+    { title: "Datos y privacidad", body: ["La app no usa backend, nube ni base remota.", "Los datos quedan en el teléfono salvo exportación o uso compartido.", "Google Books se contacta solo para recuperar información desde un ISBN o un título."] }
   ],
   DE: [
     { title: "Zweck", body: ["COOL katalogisiert Bücher in der lokalen Datenbank des Telefons.", "Jedes Telefon hat seine eigene Bibliothek und kann eigene Dateien exportieren."] },
-    { title: "Bücher hinzufügen", body: ["Mit \"Buch scannen\" liest du eine ISBN mit der Kamera.", "Der Scan funktioniert am besten bei guter Beleuchtung. Halte den Barcode gut sichtbar und ruhig.", "Wenn Google Books Daten findet, kannst du sie prüfen, bearbeiten und speichern.", "Nutze \"Manuell hinzufügen\", wenn der Code nicht existiert oder keine Daten verfügbar sind."] },
-    { title: "Bearbeiten und organisieren", body: ["Öffne ein Buch, um Details zu sehen, es zu bearbeiten oder zu löschen.", "\"Regal/Raum\" gibt an, wo sich das Buch befindet.", "Bereits verwendete Standorte werden bei neuen Büchern vorgeschlagen."] },
+    { title: "Bücher hinzufügen", body: ["Mit \"Buch scannen\" liest du eine ISBN mit der Kamera.", "Der Scan funktioniert am besten bei guter Beleuchtung. Halte den Barcode gut sichtbar und ruhig.", "Wenn Google Books Daten findet, kannst du sie prüfen, bearbeiten und speichern.", "Nutze \"Manuell hinzufügen\", wenn der Code nicht existiert oder keine Daten verfügbar sind.", "Unter \"Manuell hinzufügen\" kannst du auch nach ISBN oder Titel suchen oder die Felder von Hand ausfüllen.", "Nutze \"Cover fotografieren\", um ein Cover hinzuzufügen, wenn Google Books keines liefert."] },
+    { title: "Bearbeiten und organisieren", body: ["Öffne ein Buch, um Details zu sehen, es zu bearbeiten oder zu löschen.", "\"Regal/Raum\" gibt an, wo sich das Buch befindet.", "Nur noch in der Bibliothek verwendete Standorte werden bei neuen Büchern vorgeschlagen."] },
     { title: "Suchen und filtern", body: ["Auf Home kannst du nach Text suchen und nach Kategorie, Autor, Sprache, Standort und Jahr filtern.", "\"Bibliothek ansehen\" zeigt immer die vollständige Liste.", "Der Button neben der Suche öffnet die gefilterte Liste."] },
     { title: "Exportieren", body: ["\"Exportieren\" erzeugt CSV-, Excel- oder Word-Dateien.", "Du kannst Felder auswählen und eine teilweise Spaltenreihenfolge festlegen.", "Datensätze werden nach der ersten exportierten Spalte sortiert."] },
-    { title: "Daten und Datenschutz", body: ["Die App nutzt kein Backend, keine Cloud und keine entfernte Datenbank.", "Daten bleiben auf dem Telefon, außer du exportierst oder teilst sie.", "Google Books wird nur kontaktiert, um Informationen aus einer ISBN abzurufen."] }
+    { title: "Daten und Datenschutz", body: ["Die App nutzt kein Backend, keine Cloud und keine entfernte Datenbank.", "Daten bleiben auf dem Telefon, außer du exportierst oder teilst sie.", "Google Books wird nur kontaktiert, um Informationen aus einer ISBN oder einem Titel abzurufen."] }
   ]
 };
 

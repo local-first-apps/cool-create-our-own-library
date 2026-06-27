@@ -161,7 +161,10 @@ export async function renameLibrary(oldName: string, newName: string): Promise<s
 export async function getLocations(): Promise<string[]> {
   const db = await getDatabase();
   const rows = await db.getAllAsync<{ name: string }>(
-    "SELECT name FROM locations ORDER BY name COLLATE NOCASE ASC"
+    `SELECT DISTINCT shelf AS name
+     FROM books
+     WHERE shelf IS NOT NULL AND TRIM(shelf) != ''
+     ORDER BY shelf COLLATE NOCASE ASC`
   );
   return rows.map((row) => row.name);
 }

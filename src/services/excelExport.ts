@@ -1,4 +1,5 @@
 import { File, Paths } from "expo-file-system";
+import JSZip from "jszip";
 import * as Sharing from "expo-sharing";
 import * as XLSX from "xlsx";
 
@@ -301,7 +302,7 @@ function docxCell(value: string | number, width: number, shaded = false, bold = 
   </w:tc>`;
 }
 
-function makeDocx(books: Book[], deviceName: string, fields: ExportField[], libraryName: string): Uint8Array {
+async function makeDocx(books: Book[], deviceName: string, fields: ExportField[], libraryName: string): Promise<Uint8Array> {
   const columnWidths = documentColumnWidths(books, deviceName, fields);
   const tableWidth = 14400;
   const docxWidths = columnWidths.map((width) => (width / 100) * tableWidth);
@@ -346,19 +347,19 @@ function makeDocx(books: Book[], deviceName: string, fields: ExportField[], libr
   </w:body>
 </w:document>`;
 
-  const zip = XLSX.CFB.utils.cfb_new();
-  XLSX.CFB.utils.cfb_add(zip, "[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  const zip = new JSZip();
+  zip.file("[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
 </Types>`);
-  XLSX.CFB.utils.cfb_add(zip, "_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  zip.folder("_rels")?.file(".rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
   <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
 </Relationships>`);
-  XLSX.CFB.utils.cfb_add(zip, "word/document.xml", documentXml);
-  return XLSX.CFB.write(zip, { type: "buffer" }) as Uint8Array;
+  zip.folder("word")?.file("document.xml", documentXml);
+  return zip.generateAsync({ compression: "DEFLATE", type: "uint8array" });
 }
 
 async function shareFile(file: File, mimeType: string, dialogTitle: string, UTI?: string): Promise<string> {
@@ -402,7 +403,7 @@ export async function exportBooks(
   if (format === "word") {
     const file = new File(Paths.document, `${baseName}.docx`);
     file.create({ overwrite: true });
-    file.write(makeDocx(sortedBooks, deviceName, fields, libraryName));
+    file.write(await makeDocx(sortedBooks, deviceName, fields, libraryName));
     return shareFile(file, WORD_MIME, "Esporta Word", "org.openxmlformats.wordprocessingml.document");
   }
 

@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
-import { Camera, Save, X, type LucideIcon } from "lucide-react-native";
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ArrowRight, Camera, Save, Search, X, type LucideIcon } from "lucide-react-native";
+import {
+  ActivityIndicator,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useI18n } from "../i18n";
 import { takeCoverPhoto } from "../services/coverPhoto";
 import { DEFAULT_LIBRARY_NAME, getLocations } from "../services/db";
+import { fetchBookByIsbn, searchBooksByTitle } from "../services/googleBooks";
 import { BookInput } from "../types/Book";
 import { BOOK_LANGUAGE_OPTIONS, normalizeBookLanguage } from "../utils/bookLanguage";
 
@@ -51,7 +64,7 @@ const FIELDS: Array<{
   multiline?: boolean;
   keyboardType?: "default" | "number-pad";
 }> = [
-  { key: "isbn", label: "ISBN" },
+  { key: "isbn", label: "ISBN", keyboardType: "number-pad" },
   { key: "title", label: "Titolo", labelKey: "title", required: true },
   { key: "subtitle", label: "Sottotitolo", labelKey: "subtitle" },
   { key: "authors", label: "Autore/i", labelKey: "authors" },
@@ -85,8 +98,11 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
     thumbnail: initialValue?.thumbnail ?? null
   });
   const [locations, setLocations] = useState<string[]>([]);
+  const [lookupLoading, setLookupLoading] = useState<"isbn" | "title" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [titleResults, setTitleResults] = useState<BookInput[]>([]);
+  const [titleModalVisible, setTitleModalVisible] = useState(false);
 
   useEffect(() => {
     getLocations()
@@ -119,6 +135,68 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
       }
     } catch (err) {
       setError(err instanceof Error && err.message === "CAMERA_PERMISSION_DENIED" ? t("cameraPermissionTitle") : t("cameraError"));
+    }
+  }
+
+  function applyLookupResult(book: BookInput) {
+    setValue((current) => ({
+      ...current,
+      ...book,
+      library: current.library,
+      notes: current.notes,
+      shelf: current.shelf
+    }));
+    setTitleModalVisible(false);
+    setError(null);
+  }
+
+  async function handleIsbnLookup() {
+    const isbn = (value.isbn ?? "").trim();
+    if (!isbn) {
+      setError(t("invalidIsbnBody"));
+      return;
+    }
+
+    setLookupLoading("isbn");
+    setError(null);
+    try {
+      const found = await fetchBookByIsbn(isbn);
+      if (!found) {
+        setError(t("isbnNotFound"));
+        return;
+      }
+
+      applyLookupResult(found);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t("error");
+      setError(message.includes("ISBN") && message.includes("riconosciuto") ? t("invalidIsbnBody") : message);
+    } finally {
+      setLookupLoading(null);
+    }
+  }
+
+  async function handleTitleLookup() {
+    const title = value.title.trim();
+    if (!title) {
+      setError(`${t("title")} *`);
+      return;
+    }
+
+    setLookupLoading("title");
+    setError(null);
+    try {
+      const results = await searchBooksByTitle(title, 5);
+      if (results.length === 0) {
+        setError(t("titleNotFound"));
+        return;
+      }
+
+      setTitleResults(results);
+      setTitleModalVisible(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("error"));
+    } finally {
+      setLookupLoading(null);
     }
   }
 
@@ -161,16 +239,39 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
                 ))}
               </ScrollView>
             ) : (
-              <TextInput
-                autoCapitalize="sentences"
-                keyboardType={field.keyboardType ?? "default"}
-                multiline={field.multiline}
-                onChangeText={(text) => setValue((current) => ({ ...current, [field.key]: text }))}
-                placeholder={field.labelKey ? t(field.labelKey) : field.label}
-                placeholderTextColor="#8a94a6"
-                style={[styles.input, field.multiline && styles.multiline]}
-                value={(value[field.key] ?? "") as string}
-              />
+              <View style={field.key === "isbn" || field.key === "title" ? styles.lookupRow : undefined}>
+                <TextInput
+                  autoCapitalize="sentences"
+                  keyboardType={field.keyboardType ?? "default"}
+                  multiline={field.multiline}
+                  onChangeText={(text) => setValue((current) => ({ ...current, [field.key]: text }))}
+                  placeholder={field.labelKey ? t(field.labelKey) : field.label}
+                  placeholderTextColor="#8a94a6"
+                  style={[
+                    styles.input,
+                    field.multiline && styles.multiline,
+                    (field.key === "isbn" || field.key === "title") && styles.lookupInput
+                  ]}
+                  value={(value[field.key] ?? "") as string}
+                />
+                {field.key === "isbn" || field.key === "title" ? (
+                  <Pressable
+                    accessibilityLabel={field.key === "isbn" ? t("searchByIsbn") : t("searchByTitle")}
+                    accessibilityRole="button"
+                    disabled={Boolean(lookupLoading)}
+                    onPress={field.key === "isbn" ? () => void handleIsbnLookup() : () => void handleTitleLookup()}
+                    style={[styles.lookupButton, lookupLoading && styles.lookupButtonDisabled]}
+                  >
+                    {lookupLoading === field.key ? (
+                      <ActivityIndicator color="#ffffff" />
+                    ) : field.key === "isbn" ? (
+                      <ArrowRight color="#ffffff" size={27} strokeWidth={2.4} />
+                    ) : (
+                      <Search color="#ffffff" size={25} strokeWidth={2.4} />
+                    )}
+                  </Pressable>
+                ) : null}
+              </View>
             )}
             {field.key === "shelf" && locations.length > 0 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestions}>
@@ -196,6 +297,42 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
           <FormActionButton icon={X} label={t("cancel")} onPress={onCancel} disabled={saving} />
         </View>
       </ScrollView>
+
+      <Modal animationType="fade" transparent visible={titleModalVisible} onRequestClose={() => setTitleModalVisible(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalPanel}>
+            <Text style={styles.modalTitle}>{t("chooseBook")}</Text>
+            <ScrollView style={styles.resultList} contentContainerStyle={styles.resultListContent}>
+              {titleResults.map((book, index) => (
+                <Pressable
+                  accessibilityRole="button"
+                  key={`${book.isbn || book.title}-${index}`}
+                  onPress={() => applyLookupResult(book)}
+                  style={styles.resultRow}
+                >
+                  {book.thumbnail ? <Image source={{ uri: book.thumbnail }} style={styles.resultCover} resizeMode="cover" /> : null}
+                  <View style={styles.resultTextBox}>
+                    <Text numberOfLines={2} style={styles.resultTitle}>
+                      {book.title}
+                    </Text>
+                    {book.subtitle ? (
+                      <Text numberOfLines={1} style={styles.resultMeta}>
+                        {book.subtitle}
+                      </Text>
+                    ) : null}
+                    <Text numberOfLines={2} style={styles.resultMeta}>
+                      {[book.authors, book.publishedYear, book.publisher].filter(Boolean).join(" • ")}
+                    </Text>
+                  </View>
+                </Pressable>
+              ))}
+            </ScrollView>
+            <Pressable accessibilityRole="button" onPress={() => setTitleModalVisible(false)} style={styles.modalCancelButton}>
+              <Text style={styles.modalCancelText}>{t("cancel")}</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -294,6 +431,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10
   },
+  lookupButton: {
+    alignItems: "center",
+    alignSelf: "stretch",
+    backgroundColor: "#2563EB",
+    borderRadius: 8,
+    justifyContent: "center",
+    minHeight: 46,
+    width: 54
+  },
+  lookupButtonDisabled: {
+    opacity: 0.65
+  },
+  lookupInput: {
+    flex: 1
+  },
+  lookupRow: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: 8
+  },
   label: {
     color: "#334155",
     fontSize: 14,
@@ -302,6 +459,76 @@ const styles = StyleSheet.create({
   multiline: {
     minHeight: 96,
     textAlignVertical: "top"
+  },
+  modalBackdrop: {
+    backgroundColor: "rgba(15, 23, 42, 0.45)",
+    flex: 1,
+    justifyContent: "flex-end"
+  },
+  modalCancelButton: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#d7dde6",
+    borderRadius: 8,
+    borderWidth: 1,
+    minHeight: 48,
+    justifyContent: "center"
+  },
+  modalCancelText: {
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: "800"
+  },
+  modalPanel: {
+    backgroundColor: "#f7f8fa",
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    gap: 12,
+    maxHeight: "82%",
+    padding: 16
+  },
+  modalTitle: {
+    color: "#111827",
+    fontSize: 24,
+    fontWeight: "900"
+  },
+  resultCover: {
+    backgroundColor: "#e2e8f0",
+    borderRadius: 6,
+    height: 78,
+    width: 52
+  },
+  resultList: {
+    maxHeight: 420
+  },
+  resultListContent: {
+    gap: 8
+  },
+  resultMeta: {
+    color: "#64748b",
+    fontSize: 13,
+    lineHeight: 18
+  },
+  resultRow: {
+    alignItems: "center",
+    backgroundColor: "#ffffff",
+    borderColor: "#d7dde6",
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 12,
+    minHeight: 92,
+    padding: 10
+  },
+  resultTextBox: {
+    flex: 1,
+    gap: 3
+  },
+  resultTitle: {
+    color: "#111827",
+    fontSize: 16,
+    fontWeight: "800",
+    lineHeight: 21
   },
   suggestion: {
     backgroundColor: "#eef6f5",
