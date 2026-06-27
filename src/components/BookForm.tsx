@@ -101,6 +101,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
   const [lookupLoading, setLookupLoading] = useState<"isbn" | "title" | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Partial<Record<"isbn" | "title", string>>>({});
   const [titleResults, setTitleResults] = useState<BookInput[]>([]);
   const [titleModalVisible, setTitleModalVisible] = useState(false);
 
@@ -112,7 +113,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
 
   async function handleSubmit() {
     if (!value.title.trim()) {
-      setError(`${t("title")} *`);
+      setError(t("titleRequired"));
       return;
     }
 
@@ -148,28 +149,33 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
     }));
     setTitleModalVisible(false);
     setError(null);
+    setFieldErrors({});
   }
 
   async function handleIsbnLookup() {
     const isbn = (value.isbn ?? "").trim();
     if (!isbn) {
-      setError(t("invalidIsbnBody"));
+      setFieldErrors((current) => ({ ...current, isbn: t("invalidIsbnBody") }));
       return;
     }
 
     setLookupLoading("isbn");
     setError(null);
+    setFieldErrors((current) => ({ ...current, isbn: undefined }));
     try {
       const found = await fetchBookByIsbn(isbn);
       if (!found) {
-        setError(t("isbnNotFound"));
+        setFieldErrors((current) => ({ ...current, isbn: t("isbnNotFound") }));
         return;
       }
 
       applyLookupResult(found);
     } catch (err) {
       const message = err instanceof Error ? err.message : t("error");
-      setError(message.includes("ISBN") && message.includes("riconosciuto") ? t("invalidIsbnBody") : message);
+      setFieldErrors((current) => ({
+        ...current,
+        isbn: message.includes("ISBN") && message.includes("riconosciuto") ? t("invalidIsbnBody") : message
+      }));
     } finally {
       setLookupLoading(null);
     }
@@ -178,16 +184,17 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
   async function handleTitleLookup() {
     const title = value.title.trim();
     if (!title) {
-      setError(`${t("title")} *`);
+      setFieldErrors((current) => ({ ...current, title: t("titleRequired") }));
       return;
     }
 
     setLookupLoading("title");
     setError(null);
+    setFieldErrors((current) => ({ ...current, title: undefined }));
     try {
       const results = await searchBooksByTitle(title, 5);
       if (results.length === 0) {
-        setError(t("titleNotFound"));
+        setFieldErrors((current) => ({ ...current, title: t("titleNotFound") }));
         return;
       }
 
@@ -244,7 +251,12 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
                   autoCapitalize="sentences"
                   keyboardType={field.keyboardType ?? "default"}
                   multiline={field.multiline}
-                  onChangeText={(text) => setValue((current) => ({ ...current, [field.key]: text }))}
+                  onChangeText={(text) => {
+                    setValue((current) => ({ ...current, [field.key]: text }));
+                    if (field.key === "isbn" || field.key === "title") {
+                      setFieldErrors((current) => ({ ...current, [field.key]: undefined }));
+                    }
+                  }}
                   placeholder={field.labelKey ? t(field.labelKey) : field.label}
                   placeholderTextColor="#8a94a6"
                   style={[
@@ -273,6 +285,9 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
                 ) : null}
               </View>
             )}
+            {(field.key === "isbn" || field.key === "title") && fieldErrors[field.key] ? (
+              <Text style={styles.fieldError}>{fieldErrors[field.key]}</Text>
+            ) : null}
             {field.key === "shelf" && locations.length > 0 ? (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.suggestions}>
                 {locations.map((location) => (
@@ -300,7 +315,7 @@ export function BookForm({ initialValue, submitLabel, onCancel, onSubmit }: Book
 
       <Modal animationType="fade" transparent visible={titleModalVisible} onRequestClose={() => setTitleModalVisible(false)}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.modalPanel}>
+          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 24) }]}>
             <Text style={styles.modalTitle}>{t("chooseBook")}</Text>
             <ScrollView style={styles.resultList} contentContainerStyle={styles.resultListContent}>
               {titleResults.map((book, index) => (
@@ -419,6 +434,11 @@ const styles = StyleSheet.create({
   },
   field: {
     gap: 6
+  },
+  fieldError: {
+    color: "#b91c1c",
+    fontSize: 13,
+    lineHeight: 18
   },
   input: {
     backgroundColor: "#ffffff",

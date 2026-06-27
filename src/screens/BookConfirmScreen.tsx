@@ -45,7 +45,8 @@ export function BookConfirmScreen({ navigation, route }: Props) {
       const result = await saveBook({ ...book, library, shelf, notes });
       if (result.duplicate) {
         Alert.alert(t("duplicate"), t("duplicateBody"), [
-          { text: t("returnList"), onPress: () => navigation.popToTop() }
+          { text: t("back"), style: "cancel" },
+          { text: t("library"), onPress: () => navigation.navigate("Library", undefined) }
         ]);
         return;
       }
