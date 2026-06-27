@@ -40,6 +40,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 14px;
   display: inline-flex;
+  flex: 0 0 58px;
   height: 58px;
   justify-content: center;
   overflow: hidden;
@@ -48,9 +49,11 @@ body {
 
 .mark img {
   display: block;
-  height: 100%;
-  object-fit: cover;
-  width: 100%;
+  height: 42px;
+  max-height: 42px;
+  max-width: 42px;
+  object-fit: contain;
+  width: 42px;
 }
 
 h1,
