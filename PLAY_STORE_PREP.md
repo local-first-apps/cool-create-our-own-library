@@ -50,11 +50,11 @@ COOL e' pensata per chi vuole organizzare una biblioteca domestica o personale i
 
 ### Short Description
 
-A local catalog to organize your personal library.
+A smart local catalog for people who love their books.
 
 ### Full Description
 
-COOL - Create Our Own Library helps you catalog the books in your personal library directly on your phone.
+Your books deserve more than a shelf. COOL helps you turn your personal library into a clean, searchable catalog that stays on your phone.
 
 You can add a book by scanning its ISBN barcode, searching by ISBN or title, or entering the data manually. When available, COOL retrieves bibliographic information from Google Books, including title, authors, publisher, year, language, description and cover image.
 
@@ -72,7 +72,7 @@ Main features:
 - export to CSV, Excel and Word;
 - Device column in exports, useful when merging files produced by different phones.
 
-COOL is designed for people who want a simple, local and independent way to organize a home or personal library.
+COOL is designed for readers, collectors and home libraries that want a simple, private and independent way to keep books organized.
 
 ## Data Safety Draft
 
