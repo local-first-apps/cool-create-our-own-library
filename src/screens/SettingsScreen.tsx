@@ -1,7 +1,7 @@
 import { useFocusEffect } from "@react-navigation/native";
 import type { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { useCallback, useState } from "react";
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppButton } from "../components/AppButton";
@@ -26,8 +26,10 @@ import {
 import { RootStackParamList } from "../types/Navigation";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Settings">;
-type LegalModal = "terms" | "privacy" | null;
 const APP_VERSION_LABEL = "COOL | Create Our Own Library (1.0.0 - build 1)";
+const PRIVACY_URL = "https://local-first-apps.github.io/cool-create-our-own-library/privacy.html";
+const TERMS_URL = "https://local-first-apps.github.io/cool-create-our-own-library/terms.html";
+const FEEDBACK_EMAIL_URL = "mailto:cool.library.app@gmail.com?subject=COOL%20feedback";
 
 export function SettingsScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -37,7 +39,6 @@ export function SettingsScreen({ navigation }: Props) {
   const [currentLibraryName, setCurrentLibraryName] = useState("");
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE);
   const [savedLanguage, setSavedLanguage] = useState(DEFAULT_LANGUAGE);
-  const [legalModal, setLegalModal] = useState<LegalModal>(null);
   const [saving, setSaving] = useState(false);
 
   useFocusEffect(
@@ -77,6 +78,14 @@ export function SettingsScreen({ navigation }: Props) {
       Alert.alert(t("error"), err instanceof Error ? err.message : t("localDatabaseError"));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function openExternalUrl(url: string) {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert(t("error"), url);
     }
   }
 
@@ -157,36 +166,19 @@ export function SettingsScreen({ navigation }: Props) {
         <View style={styles.feedbackAction}>
           <AppButton
             label={t("feedback")}
-            onPress={() => Alert.alert(t("feedbackTitle"), t("feedbackBody"))}
+            onPress={() => openExternalUrl(FEEDBACK_EMAIL_URL)}
             variant="secondary"
           />
         </View>
 
         <View style={styles.legalActions}>
-          <LegalLinkButton label={t("terms")} onPress={() => setLegalModal("terms")} />
-          <LegalLinkButton label={t("privacy")} onPress={() => setLegalModal("privacy")} />
+          <LegalLinkButton label={t("terms")} onPress={() => openExternalUrl(TERMS_URL)} />
+          <LegalLinkButton label={t("privacy")} onPress={() => openExternalUrl(PRIVACY_URL)} />
         </View>
 
         <Text style={styles.appVersion}>{APP_VERSION_LABEL}</Text>
       </ScrollView>
 
-      <Modal animationType="slide" onRequestClose={() => setLegalModal(null)} transparent visible={Boolean(legalModal)}>
-        <View style={styles.modalBackdrop}>
-          <View style={[styles.modalPanel, { paddingBottom: Math.max(insets.bottom + 18, 34) }]}>
-            <Text style={styles.modalTitle}>{legalModal === "privacy" ? t("privacy") : t("terms")}</Text>
-            <ScrollView style={styles.legalTextBox}>
-              {(legalModal === "privacy" ? PRIVACY_TEXT : TERMS_TEXT).map((paragraph) => (
-                <Text key={paragraph} style={styles.legalText}>
-                  {paragraph}
-                </Text>
-              ))}
-            </ScrollView>
-            <View style={styles.modalActions}>
-              <AppButton label={t("close")} onPress={() => setLegalModal(null)} />
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

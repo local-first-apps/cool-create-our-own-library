@@ -1,6 +1,6 @@
 # COOL - Play Store Preparation
 
-Last updated: 2026-06-27
+Last updated: 2026-06-29
 
 ## App Identity
 
@@ -11,40 +11,13 @@ Last updated: 2026-06-27
 - Developer country: Italy
 - Public contact email: cool.library.app@gmail.com
 - Category: Books & Reference
-- Price: 0.99 EUR
+- Price: 0.49 EUR
 - Target audience: General audience, not specifically for children
 - Ads: No
 - In-app purchases: No
+- Subscriptions: No
 - Accounts: No
 - Backend/cloud database: No
-
-## Store Listing - Italian
-
-### Short Description
-
-Catalogo locale per organizzare la tua biblioteca personale.
-
-### Full Description
-
-COOL - Create Our Own Library ti aiuta a catalogare i libri della tua biblioteca personale direttamente sul telefono.
-
-Puoi aggiungere un libro scansionando il codice ISBN, cercando per ISBN o titolo, oppure inserendo i dati manualmente. Quando disponibili, COOL recupera informazioni bibliografiche da Google Books, come titolo, autori, editore, anno, lingua, descrizione e copertina.
-
-Ogni telefono mantiene il proprio database locale SQLite. Non sono necessari account, backend, sincronizzazione cloud o database remoti. I dati restano sul dispositivo, salvo esportazioni o condivisioni avviate volontariamente dall'utente.
-
-Funzioni principali:
-
-- catalogo libri locale;
-- scansione ISBN con fotocamera;
-- ricerca manuale per ISBN o titolo;
-- inserimento e modifica dei dati del libro;
-- foto copertina opzionale;
-- posizioni di catalogazione, come stanza o scaffale;
-- filtri per titolo, autore, categoria, lingua, posizione e anno;
-- esportazione in CSV, Excel e Word;
-- colonna Dispositivo negli export, utile per unire file prodotti da telefoni diversi.
-
-COOL e' pensata per chi vuole organizzare una biblioteca domestica o personale in modo semplice, locale e indipendente.
 
 ## Store Listing - English
 
@@ -55,6 +28,8 @@ A smart local catalog for people who love their books.
 ### Full Description
 
 Your books deserve more than a shelf. COOL helps you turn your personal library into a clean, searchable catalog that stays on your phone.
+
+COOL is a one-time purchase: no ads, no in-app purchases and no subscriptions.
 
 You can add a book by scanning its ISBN barcode, searching by ISBN or title, or entering the data manually. When available, COOL retrieves bibliographic information from Google Books, including title, authors, publisher, year, language, description and cover image.
 
@@ -73,6 +48,14 @@ Main features:
 - Device column in exports, useful when merging files produced by different phones.
 
 COOL is designed for readers, collectors and home libraries that want a simple, private and independent way to keep books organized.
+
+Launch positioning:
+
+- introductory price: 0.49 EUR;
+- one-time purchase;
+- no ads;
+- no in-app purchases;
+- no subscriptions.
 
 ## Data Safety Draft
 
@@ -113,11 +96,10 @@ Prepared files:
 - docs/styles.css
 - docs/.nojekyll
 
-Expected privacy policy URL after GitHub Pages setup:
+Current published legal URLs:
 
-https://<github-user>.github.io/<repository-name>/privacy.html
-
-Replace the placeholder after the GitHub repository is created.
+- Privacy Policy: https://local-first-apps.github.io/cool-create-our-own-library/privacy.html
+- Terms of Service: https://local-first-apps.github.io/cool-create-our-own-library/terms.html
 
 ## Content Rating Notes
 
